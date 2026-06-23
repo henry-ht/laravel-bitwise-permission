@@ -1,0 +1,675 @@
+/* ============================================================
+   laravel-bitwise-permission — bwp.css
+   CSS minimalista para las vistas Livewire del paquete.
+   No depende de Bootstrap ni de ningún framework externo.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bwp-bg:        #0f1117;
+  --bwp-surface:   #1c1f2b;
+  --bwp-surface-alt:#252a3a;
+  --bwp-border:    #2e3347;
+  --bwp-text:      #e2e8f0;
+  --bwp-muted:     #7c8bab;
+  --bwp-dim:       #4a5568;
+  --bwp-accent:    #3b82f6;
+  --bwp-success:   #10b981;
+  --bwp-danger:    #ef4444;
+  --bwp-warning:   #f59e0b;
+  --bwp-radius:    0.375rem;
+  --bwp-radius-lg: 0.5rem;
+  --bwp-font:      'Inter', system-ui, sans-serif;
+  --bwp-font-sm:   0.75rem;
+  --bwp-font-base: 0.875rem;
+}
+
+/* ── Reset base ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ── Layout principal ────────────────────────────────────── */
+.bwp-page {
+  min-height:  100vh;
+  background:  var(--bwp-bg);
+  font-family: var(--bwp-font);
+  font-size:   var(--bwp-font-base);
+  color:       var(--bwp-text);
+  padding:     0;
+  margin:      0;
+}
+
+.bwp-nav {
+  display:       flex;
+  align-items:   center;
+  gap:           0.25rem;
+  padding:       0.75rem 1.5rem;
+  border-bottom: 1px solid var(--bwp-border);
+  background:    var(--bwp-surface);
+  flex-wrap:     wrap;
+}
+
+.bwp-nav__brand {
+  font-size:      0.85rem;
+  font-weight:    800;
+  color:          var(--bwp-text);
+  letter-spacing: -0.02em;
+  margin-right:   0.75rem;
+  text-decoration:none;
+}
+
+.bwp-nav__link {
+  padding:        0.3rem 0.65rem;
+  border-radius:  var(--bwp-radius);
+  font-size:      var(--bwp-font-sm);
+  font-weight:    500;
+  text-decoration:none;
+  color:          var(--bwp-muted);
+  transition:     all 0.15s ease;
+}
+.bwp-nav__link:hover          { color: var(--bwp-text); background: var(--bwp-surface-alt); }
+.bwp-nav__link.active         { color: var(--bwp-accent); background: rgba(59,130,246,0.1); }
+
+.bwp-main {
+  max-width: 1200px;
+  margin:    0 auto;
+  padding:   2rem 1.5rem;
+}
+
+/* ── Wrap del componente ─────────────────────────────────── */
+.bwp-wrap {
+  font-family: var(--bwp-font);
+  font-size:   var(--bwp-font-base);
+  color:       var(--bwp-text);
+}
+
+/* ── Header de sección ───────────────────────────────────── */
+.bwp-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  margin-bottom:   1.5rem;
+  gap:             1rem;
+  flex-wrap:       wrap;
+}
+
+.bwp-title {
+  font-size:      1.25rem;
+  font-weight:    700;
+  color:          var(--bwp-text);
+  letter-spacing: -0.01em;
+  margin:         0;
+}
+
+/* ── Botones ─────────────────────────────────────────────── */
+.bwp-btn {
+  display:        inline-flex;
+  align-items:    center;
+  gap:            0.4rem;
+  padding:        0.4rem 0.9rem;
+  border-radius:  var(--bwp-radius);
+  font-size:      var(--bwp-font-base);
+  font-weight:    500;
+  font-family:    var(--bwp-font);
+  cursor:         pointer;
+  border:         1px solid transparent;
+  transition:     all 0.15s ease;
+  text-decoration:none;
+  line-height:    1.5;
+  white-space:    nowrap;
+}
+.bwp-btn--primary   { background: var(--bwp-accent); color: #fff; }
+.bwp-btn--primary:hover { background: #2563eb; color: #fff; }
+.bwp-btn--secondary { background: var(--bwp-surface-alt); border-color: var(--bwp-border); color: var(--bwp-text); }
+.bwp-btn--secondary:hover { background: var(--bwp-border); }
+.bwp-btn--danger    { background: var(--bwp-danger); color: #fff; }
+.bwp-btn--danger:hover { background: #dc2626; }
+.bwp-btn--ghost     { background: transparent; border-color: transparent; color: var(--bwp-muted); }
+.bwp-btn--ghost:hover { background: var(--bwp-surface-alt); color: var(--bwp-text); }
+.bwp-btn--sm        { padding: 0.25rem 0.6rem; font-size: var(--bwp-font-sm); }
+
+/* ── Formularios ─────────────────────────────────────────── */
+.bwp-field {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.3rem;
+  margin-bottom:  1.1rem;
+  position:       relative; /* evita superposición de elementos */
+}
+
+.bwp-field:last-child { margin-bottom: 0; }
+
+.bwp-label {
+  display:        block;
+  font-size:      var(--bwp-font-sm);
+  font-weight:    600;
+  color:          var(--bwp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height:    1.4;
+}
+
+.bwp-input,
+.bwp-select,
+.bwp-textarea {
+  display:       block;
+  width:         100%;
+  background:    var(--bwp-surface-alt);
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius);
+  color:         var(--bwp-text);
+  font-size:     var(--bwp-font-base);
+  font-family:   var(--bwp-font);
+  padding:       0.45rem 0.75rem;
+  line-height:   1.5;
+  transition:    border-color 0.15s ease, box-shadow 0.15s ease;
+  /* Evita que se desborde o sobreponga */
+  box-sizing:    border-box;
+  appearance:    none;
+  -webkit-appearance: none;
+}
+
+.bwp-input::placeholder,
+.bwp-textarea::placeholder { color: var(--bwp-dim); }
+
+.bwp-input:focus,
+.bwp-select:focus,
+.bwp-textarea:focus {
+  outline:      none;
+  border-color: var(--bwp-accent);
+  box-shadow:   0 0 0 3px rgba(59,130,246,0.1);
+  /* z-index para que el focus no tape otros elementos */
+  position:     relative;
+  z-index:      1;
+}
+
+.bwp-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%237c8bab' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat:   no-repeat;
+  background-position: right 0.6rem center;
+  background-size:     14px;
+  padding-right:       2rem;
+  cursor:              pointer;
+}
+
+.bwp-textarea {
+  resize:     vertical;
+  min-height: 80px;
+}
+
+.bwp-error {
+  font-size:  var(--bwp-font-sm);
+  color:      var(--bwp-danger);
+  margin-top: 0.2rem;
+  line-height:1.4;
+}
+
+.bwp-hint {
+  font-size:  var(--bwp-font-sm);
+  color:      var(--bwp-dim);
+  margin-top: 0.2rem;
+  line-height:1.4;
+}
+
+/* ── Grid de campos ──────────────────────────────────────── */
+.bwp-grid {
+  display: grid;
+  gap:     1rem;
+}
+.bwp-grid--2 { grid-template-columns: repeat(2, 1fr); }
+.bwp-grid--3 { grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 640px) {
+  .bwp-grid--2,
+  .bwp-grid--3 { grid-template-columns: 1fr; }
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+.bwp-card {
+  background:    var(--bwp-surface);
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius-lg);
+  padding:       1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.bwp-card__title {
+  font-size:     0.875rem;
+  font-weight:   700;
+  color:         var(--bwp-text);
+  margin:        0 0 1.1rem;
+  padding-bottom:0.75rem;
+  border-bottom: 1px solid var(--bwp-border);
+}
+
+/* ── Tabla ───────────────────────────────────────────────── */
+.bwp-table-wrap {
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius-lg);
+  overflow:      hidden;
+  background:    var(--bwp-surface);
+  /* Scroll horizontal en mobile */
+  overflow-x:    auto;
+}
+
+.bwp-table {
+  width:           100%;
+  border-collapse: collapse;
+  font-size:       var(--bwp-font-base);
+  /* Evita que la tabla se comprima y superponga contenido */
+  min-width:       500px;
+}
+
+.bwp-table thead th {
+  background:     transparent;
+  color:          var(--bwp-muted);
+  font-size:      var(--bwp-font-sm);
+  font-weight:    600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding:        0.75rem 1rem;
+  border-bottom:  1px solid var(--bwp-border);
+  text-align:     left;
+  white-space:    nowrap;
+  cursor:         pointer;
+  user-select:    none;
+}
+.bwp-table thead th:hover { color: var(--bwp-text); }
+
+.bwp-table tbody td {
+  padding:        0.7rem 1rem;
+  border-bottom:  1px solid rgba(46,51,71,0.5);
+  color:          var(--bwp-muted);
+  vertical-align: middle;
+  /* Evita que el contenido se desborde */
+  word-break:     break-word;
+}
+.bwp-table tbody tr:last-child td { border-bottom: none; }
+.bwp-table tbody tr:hover td { background: rgba(59,130,246,0.04); }
+
+/* Columna de acciones — no colapsa */
+.bwp-table .bwp-col-actions {
+  width:      120px;
+  white-space:nowrap;
+}
+
+/* ── Acciones inline ─────────────────────────────────────── */
+.bwp-actions {
+  display:     flex;
+  align-items: center;
+  gap:         0.35rem;
+  flex-wrap:   nowrap;
+}
+
+/* ── Toolbar (search + filtros) ──────────────────────────── */
+.bwp-toolbar {
+  display:     flex;
+  align-items: center;
+  gap:         0.65rem;
+  margin-bottom:1rem;
+  flex-wrap:   wrap;
+}
+
+.bwp-search {
+  position:  relative;
+  flex:      1;
+  min-width: 180px;
+  max-width: 300px;
+}
+.bwp-search input {
+  padding-left: 2rem;
+  width:        100%;
+}
+.bwp-search-icon {
+  position:       absolute;
+  left:           0.65rem;
+  top:            50%;
+  transform:      translateY(-50%);
+  color:          var(--bwp-dim);
+  font-size:      0.8rem;
+  pointer-events: none;
+  line-height:    1;
+}
+
+/* ── Select inline en toolbar (filtros) ──────────────────── */
+.bwp-filter {
+  min-width: 140px;
+  max-width: 200px;
+}
+
+/* ── Badges ──────────────────────────────────────────────── */
+.bwp-badge {
+  display:       inline-flex;
+  align-items:   center;
+  gap:           0.25rem;
+  font-size:     0.7rem;
+  font-weight:   600;
+  padding:       0.2em 0.55em;
+  border-radius: 0.25rem;
+  white-space:   nowrap;
+}
+.bwp-badge--primary { background: rgba(59,130,246,0.1);  color: var(--bwp-accent); }
+.bwp-badge--success { background: rgba(16,185,129,0.1);  color: var(--bwp-success); }
+.bwp-badge--warning { background: rgba(245,158,11,0.1);  color: var(--bwp-warning); }
+.bwp-badge--danger  { background: rgba(239,68,68,0.1);   color: var(--bwp-danger); }
+.bwp-badge--muted   { background: rgba(124,139,171,0.1); color: var(--bwp-muted); }
+.bwp-badge--base    { background: rgba(99,102,241,0.1);  color: #818cf8; }
+
+/* ── Bit chips ───────────────────────────────────────────── */
+.bwp-bits {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       0.25rem;
+}
+
+.bwp-bit {
+  font-size:     0.65rem;
+  font-weight:   600;
+  padding:       0.15em 0.5em;
+  border-radius: 100px;
+  border:        1px solid transparent;
+  white-space:   nowrap;
+}
+.bwp-bit--active {
+  background:   rgba(59,130,246,0.12);
+  border-color: rgba(59,130,246,0.2);
+  color:        var(--bwp-accent);
+}
+.bwp-bit--inactive {
+  background:   rgba(46,51,71,0.4);
+  border-color: rgba(46,51,71,0.6);
+  color:        var(--bwp-dim);
+}
+
+/* ── Bit grid (checkboxes en formulario de Access) ───────── */
+.bwp-bit-grid {
+  display:               grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap:                   0.5rem;
+}
+
+.bwp-bit-check {
+  display:       flex;
+  align-items:   center;
+  gap:           0.5rem;
+  background:    var(--bwp-surface-alt);
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius);
+  padding:       0.5rem 0.75rem;
+  cursor:        pointer;
+  transition:    all 0.15s ease;
+  font-size:     var(--bwp-font-sm);
+  color:         var(--bwp-muted);
+  user-select:   none;
+}
+.bwp-bit-check:has(input:checked) {
+  border-color: var(--bwp-accent);
+  background:   rgba(59,130,246,0.08);
+  color:        var(--bwp-text);
+}
+.bwp-bit-check input[type="checkbox"] {
+  accent-color: var(--bwp-accent);
+  width:        14px;
+  height:       14px;
+  flex-shrink:  0;
+  cursor:       pointer;
+}
+.bwp-bit-value {
+  margin-left: auto;
+  font-size:   0.65rem;
+  color:       var(--bwp-dim);
+}
+
+/* ── Resultado de bits seleccionados ─────────────────────── */
+.bwp-bit-result {
+  background:    var(--bwp-surface-alt);
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius);
+  padding:       0.75rem 1rem;
+  margin-top:    0.75rem;
+  display:       flex;
+  align-items:   center;
+  gap:           1rem;
+  flex-wrap:     wrap;
+}
+.bwp-bit-result__value {
+  font-size:   1.5rem;
+  font-weight: 800;
+  color:       var(--bwp-accent);
+  line-height: 1;
+}
+.bwp-bit-result__label {
+  font-size: var(--bwp-font-sm);
+  color:     var(--bwp-dim);
+  margin-bottom: 0.25rem;
+}
+
+/* ── Alert / Flash ───────────────────────────────────────── */
+.bwp-alert {
+  display:       flex;
+  align-items:   flex-start;
+  gap:           0.6rem;
+  padding:       0.75rem 1rem;
+  border-radius: var(--bwp-radius);
+  font-size:     var(--bwp-font-base);
+  border-left:   3px solid transparent;
+  margin-bottom: 1.25rem;
+  line-height:   1.5;
+}
+.bwp-alert--success { background: rgba(16,185,129,0.1);  border-color: var(--bwp-success); color: var(--bwp-success); }
+.bwp-alert--danger  { background: rgba(239,68,68,0.1);   border-color: var(--bwp-danger);  color: var(--bwp-danger); }
+.bwp-alert--warning { background: rgba(245,158,11,0.1);  border-color: var(--bwp-warning); color: var(--bwp-warning); }
+.bwp-alert--info    { background: rgba(59,130,246,0.1);  border-color: var(--bwp-accent);  color: var(--bwp-accent); }
+
+/* ── Paginación ──────────────────────────────────────────── */
+.bwp-pagination {
+  padding:     0.75rem 1rem;
+  border-top:  1px solid var(--bwp-border);
+  font-size:   var(--bwp-font-sm);
+  color:       var(--bwp-muted);
+}
+
+/* ── Confirm modal ───────────────────────────────────────── */
+.bwp-modal-backdrop {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(0,0,0,0.6);
+  z-index:         9999;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  padding:         1rem;
+}
+
+.bwp-modal {
+  background:    var(--bwp-surface);
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius-lg);
+  padding:       1.75rem;
+  max-width:     420px;
+  width:         100%;
+  box-shadow:    0 8px 32px rgba(0,0,0,0.5);
+}
+
+.bwp-modal__title {
+  font-size:     1rem;
+  font-weight:   700;
+  color:         var(--bwp-text);
+  margin:        0 0 0.5rem;
+}
+
+.bwp-modal__text {
+  font-size:     var(--bwp-font-base);
+  color:         var(--bwp-muted);
+  margin:        0 0 1.25rem;
+  line-height:   1.6;
+}
+
+.bwp-modal__actions {
+  display:         flex;
+  gap:             0.5rem;
+  justify-content: flex-end;
+}
+
+/* ── Empty state ─────────────────────────────────────────── */
+.bwp-empty {
+  text-align:  center;
+  padding:     3rem 1rem;
+  color:       var(--bwp-dim);
+  font-size:   var(--bwp-font-base);
+}
+
+/* ── Árbol de menú ───────────────────────────────────────── */
+.bwp-menu-tree {
+  list-style:    none;
+  padding:       0;
+  margin:        0;
+  display:       flex;
+  flex-direction:column;
+  gap:           0.35rem;
+}
+
+.bwp-menu-item {
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius);
+  overflow:      hidden;
+}
+
+.bwp-menu-item__row {
+  display:     flex;
+  align-items: center;
+  gap:         0.75rem;
+  padding:     0.6rem 0.85rem;
+  background:  var(--bwp-surface);
+  font-size:   var(--bwp-font-base);
+  color:       var(--bwp-text);
+}
+
+.bwp-menu-item__children {
+  list-style:  none;
+  padding:     0 0 0 1.5rem;
+  margin:      0;
+  border-top:  1px solid var(--bwp-border);
+  background:  rgba(15,17,23,0.4);
+  display:     flex;
+  flex-direction:column;
+  gap:         0;
+}
+
+/* ── Tabla de permisos de menú por rol ───────────────────── */
+.bwp-menu-role-table {
+  width:           100%;
+  border-collapse: collapse;
+  font-size:       var(--bwp-font-base);
+  min-width:       400px;
+}
+
+.bwp-menu-role-table th {
+  padding:        0.6rem 0.85rem;
+  font-size:      var(--bwp-font-sm);
+  font-weight:    600;
+  color:          var(--bwp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom:  1px solid var(--bwp-border);
+  text-align:     left;
+  white-space:    nowrap;
+}
+
+.bwp-menu-role-table td {
+  padding:       0.55rem 0.85rem;
+  border-bottom: 1px solid rgba(46,51,71,0.4);
+  vertical-align:middle;
+  color:         var(--bwp-muted);
+}
+
+.bwp-menu-role-table tr:last-child td { border-bottom: none; }
+
+/* Toggle switch para enabled/disabled en menu_role */
+.bwp-toggle {
+  position:  relative;
+  display:   inline-block;
+  width:     36px;
+  height:    20px;
+  flex-shrink:0;
+}
+
+.bwp-toggle input {
+  opacity:  0;
+  width:    0;
+  height:   0;
+  position: absolute;
+}
+
+.bwp-toggle__slider {
+  position:      absolute;
+  inset:         0;
+  background:    var(--bwp-border);
+  border-radius: 100px;
+  cursor:        pointer;
+  transition:    background 0.2s ease;
+}
+
+.bwp-toggle__slider::before {
+  content:       '';
+  position:      absolute;
+  width:         14px;
+  height:        14px;
+  left:          3px;
+  top:           3px;
+  background:    #fff;
+  border-radius: 50%;
+  transition:    transform 0.2s ease;
+}
+
+.bwp-toggle input:checked + .bwp-toggle__slider {
+  background: var(--bwp-accent);
+}
+
+.bwp-toggle input:checked + .bwp-toggle__slider::before {
+  transform: translateX(16px);
+}
+
+/* ── Separador ───────────────────────────────────────────── */
+.bwp-divider {
+  border:     none;
+  border-top: 1px solid var(--bwp-border);
+  margin:     1.25rem 0;
+}
+
+/* ── Filtro de tipo de rol ───────────────────────────────── */
+.bwp-role-type-tabs {
+  display:       flex;
+  gap:           0.25rem;
+  background:    var(--bwp-surface-alt);
+  border:        1px solid var(--bwp-border);
+  border-radius: var(--bwp-radius);
+  padding:       0.2rem;
+  margin-bottom: 1rem;
+}
+
+.bwp-role-type-tab {
+  flex:          1;
+  text-align:    center;
+  padding:       0.35rem 0.75rem;
+  border-radius: calc(var(--bwp-radius) - 2px);
+  font-size:     var(--bwp-font-sm);
+  font-weight:   500;
+  cursor:        pointer;
+  border:        none;
+  background:    transparent;
+  color:         var(--bwp-muted);
+  transition:    all 0.15s ease;
+  font-family:   var(--bwp-font);
+  white-space:   nowrap;
+}
+
+.bwp-role-type-tab.active,
+.bwp-role-type-tab:hover {
+  background: var(--bwp-surface);
+  color:      var(--bwp-text);
+}
+
+.bwp-role-type-tab.active {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}

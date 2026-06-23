@@ -1,0 +1,49 @@
+{
+    "name": "henry-ht/laravel-bitwise-permission",
+    "description": "Bitwise permission system for Laravel. Roles, permissions, routes and menus with Livewire UI.",
+    "type": "library",
+    "keywords": ["laravel", "permissions", "bitwise", "roles", "livewire"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Henry HT",
+            "homepage": "https://github.com/henry-ht"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "livewire/livewire": "^4.3"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0",
+        "pestphp/pest": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "HenryHt\\BitwisePermission\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "HenryHt\\BitwisePermission\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "HenryHt\\BitwisePermission\\Providers\\BitwisePermissionServiceProvider"
+            ],
+            "aliases": {
+                "BitwisePermission": "HenryHt\\BitwisePermission\\Facades\\BitwisePermission"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}
