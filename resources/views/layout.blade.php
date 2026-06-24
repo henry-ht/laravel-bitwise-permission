@@ -10,7 +10,7 @@
 <body class="bwp-page">
 
     <nav class="bwp-nav">
-        <a href="{{ route('bwp.roles.index') }}" class="bwp-nav__brand">BWP</a>
+        <a href="{{ route(config('bitwise-permission.dashboard_route')) }}" class="bwp-nav__brand">BWP</a>
 
         <a href="{{ route('bwp.roles.index') }}"
            class="bwp-nav__link {{ request()->routeIs('bwp.roles.*') ? 'active' : '' }}">

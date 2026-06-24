@@ -76,6 +76,91 @@
   padding:   2rem 1.5rem;
 }
 
+
+nav[role="navigation"] {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+nav[role="navigation"] p {
+    margin: 0;
+    color: #9ca3af;
+    font-size: 14px;
+}
+
+nav[role="navigation"] .relative.z-0.inline-flex {
+    display: flex;
+    align-items: center;
+}
+
+nav[role="navigation"] button,
+nav[role="navigation"] [aria-current="page"] > span,
+nav[role="navigation"] [aria-disabled="true"] > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid #374151;
+    background: #1f2937;
+    color: #e5e7eb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+nav[role="navigation"] button:hover {
+    background: #374151;
+    color: #fff;
+}
+
+nav[role="navigation"] [aria-current="page"] > span {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+
+nav[role="navigation"] [aria-disabled="true"] > span {
+    opacity: .5;
+    cursor: default;
+}
+
+nav[role="navigation"] svg {
+    width: 16px;
+    height: 16px;
+}
+
+nav[role="navigation"] .rounded-l-md {
+    border-radius: 8px 0 0 8px;
+}
+
+nav[role="navigation"] .rounded-r-md {
+    border-radius: 0 8px 8px 0;
+}
+
+@media (max-width: 768px) {
+    nav[role="navigation"] > .hidden.sm\:flex-1 {
+        display: none !important;
+    }
+
+    nav[role="navigation"] > .flex.justify-between.flex-1.sm\:hidden {
+        display: flex !important;
+    }
+}
+
+@media (min-width: 769px) {
+    nav[role="navigation"] > .hidden.sm\:flex-1 {
+        display: flex !important;
+    }
+
+    nav[role="navigation"] > .flex.justify-between.flex-1.sm\:hidden {
+        display: none !important;
+    }
+}
+
 /* ── Wrap del componente ─────────────────────────────────── */
 .bwp-wrap {
   font-family: var(--bwp-font);
@@ -384,15 +469,8 @@
 /* ── Bit grid (checkboxes en formulario de Access) ───────── */
 .bwp-bit-grid {
   display:               grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap:                   0.5rem;
-}
-
-@media (max-width: 768px) {
-  .bwp-bit-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (max-width: 480px) {
-  .bwp-bit-grid { grid-template-columns: 1fr; }
 }
 
 .bwp-bit-check {

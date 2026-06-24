@@ -104,11 +104,11 @@
                                         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.55rem 0.85rem 0.55rem 2rem;border-bottom:1px solid var(--bwp-border-subtle);">
                                             <div style="display:flex;align-items:center;gap:0.5rem;">
                                                 <span style="color:var(--bwp-dim);font-size:0.7rem;">└</span>
-                                                @if($child->icon)
+                                                {{-- @if($child->icon)
                                                     <span style="color:var(--bwp-muted);font-size:0.8rem;width:14px;text-align:center;">
                                                         {!! $child->icon !!}
                                                     </span>
-                                                @endif
+                                                @endif --}}
                                                 <span style="color:var(--bwp-muted);">{{ $child->public_name }}</span>
                                                 @if($child->patch)
                                                     <code style="font-size:0.7rem;color:var(--bwp-dim);">{{ $child->patch }}</code>

@@ -20,7 +20,6 @@ class BitwisePermissionSeeder extends Seeder
         $this->seedBaseRoutes();
         $this->seedBaseMenus();
         $this->seedRolePermissions();
-        $this->seedMenuRoleRelations();
     }
 
     // ─────────────────────────────────────────────────────────
@@ -93,8 +92,8 @@ class BitwisePermissionSeeder extends Seeder
                 ['name' => $data['name']],
                 [
                     'type'        => $data['type']        ?? 'web',
-                    'patch'       => $data['patch']        ?? null,
-                    'description' => $data['description']  ?? null,
+                    'patch'       => $data['patch']       ?? null,
+                    'description' => $data['description'] ?? null,
                 ]
             );
         }
@@ -103,7 +102,7 @@ class BitwisePermissionSeeder extends Seeder
     }
 
     // ─────────────────────────────────────────────────────────
-    // 4. Menús por defecto
+    // 4. Menús — soporta children anidados
     // ─────────────────────────────────────────────────────────
     protected function seedBaseMenus(): void
     {
@@ -114,27 +113,70 @@ class BitwisePermissionSeeder extends Seeder
             return;
         }
 
-        foreach ($baseMenus as $menuData) {
-            $fatherId = null;
+        $count = $this->processMenus($baseMenus, null);
 
-            if (isset($menuData['father_name'])) {
-                $parent   = Menu::where('name', $menuData['father_name'])->first();
-                $fatherId = $parent?->id;
-            }
+        $this->command?->info("  ✓ Menús: {$count}");
+    }
 
-            Menu::updateOrCreate(
+    /**
+     * Procesa recursivamente los menús y sus hijos.
+     *
+     * @param  array    $menus     Lista de ítems
+     * @param  int|null $fatherId  ID del padre (null = raíz)
+     * @return int                 Total de ítems procesados
+     */
+    protected function processMenus(array $menus, ?int $fatherId): int
+    {
+        $count = 0;
+
+        foreach ($menus as $menuData) {
+            $menu = Menu::updateOrCreate(
                 ['name' => $menuData['name']],
                 [
                     'public_name' => $menuData['public_name'],
-                    'patch'       => $menuData['patch']       ?? null,
-                    'icon'        => $menuData['icon']        ?? null,
-                    'order'       => $menuData['order']       ?? 0,
+                    'patch'       => $menuData['patch']  ?? null,
+                    'icon'        => $menuData['icon']   ?? null,
+                    'order'       => $menuData['order']  ?? 0,
                     'father_id'   => $fatherId,
                 ]
             );
+
+            $count++;
+
+            // Relaciones menu_role para este ítem
+            $this->seedMenuRoleForItem($menu, $menuData['roles'] ?? null);
+
+            // Procesar hijos recursivamente
+            if (! empty($menuData['children'])) {
+                $count += $this->processMenus($menuData['children'], $menu->id);
+            }
         }
 
-        $this->command?->info('  ✓ Menús: ' . count($baseMenus));
+        return $count;
+    }
+
+    /**
+     * Crea las relaciones menu_role para un ítem.
+     * Si 'roles' es null → todos los roles base lo ven habilitado.
+     * Si 'roles' es array → solo esos roles lo ven habilitado, los demás disabled.
+     */
+    protected function seedMenuRoleForItem(Menu $menu, ?array $allowedRoleNames): void
+    {
+        $prefix    = config('bitwise-permission.table_prefix', 'bwp_');
+        $table     = "{$prefix}menu_role";
+        $baseRoles = Role::where('is_base_role', true)->get();
+        $now       = now();
+
+        foreach ($baseRoles as $role) {
+            $disabled = $allowedRoleNames !== null
+                ? ! in_array($role->name, $allowedRoleNames, true)
+                : false;
+
+            DB::table($table)->updateOrInsert(
+                ['menu_id' => $menu->id, 'role_id' => $role->id],
+                ['disabled' => $disabled, 'updated_at' => $now, 'created_at' => $now]
+            );
+        }
     }
 
     // ─────────────────────────────────────────────────────────
@@ -154,9 +196,10 @@ class BitwisePermissionSeeder extends Seeder
             }
 
             foreach ($routeAccesses as $routeName => $accessValue) {
-                // if ($routeName === '*') {
-                //     continue;
-                // }
+                // '*' es solo para super_admin en config, se resuelve en el trait
+                if ($routeName === '*') {
+                    continue;
+                }
 
                 $route = AppRoute::where('name', $routeName)->first();
 
@@ -165,8 +208,12 @@ class BitwisePermissionSeeder extends Seeder
                     continue;
                 }
 
-                $bitNames   = $accessValue > 0 ? BitwiseHelper::decode($accessValue) : [];
-                $permission = Permission::where('access', $accessValue)->firstOrFail();
+                $permission = Permission::where('access', $accessValue)->first();
+
+                if (! $permission) {
+                    $this->command?->warn("  ⚠ Permiso con access={$accessValue} no encontrado.");
+                    continue;
+                }
 
                 Access::updateOrCreate(
                     ['role_id' => $role->id, 'route_id' => $route->id],
@@ -178,49 +225,5 @@ class BitwisePermissionSeeder extends Seeder
         }
 
         $this->command?->info("  ✓ Accesos: {$count}");
-    }
-
-    // ─────────────────────────────────────────────────────────
-    // 6. Relaciones menú-rol por defecto
-    // Todos los roles base ven todos los menús habilitados.
-    // Los menús con 'roles' definidos respetan esa lista.
-    // ─────────────────────────────────────────────────────────
-    protected function seedMenuRoleRelations(): void
-    {
-        $prefix    = config('bitwise-permission.table_prefix', 'bwp_');
-        $table     = "{$prefix}menu_role";
-        $baseMenus = config('bitwise-permission.base_menus', []);
-        $baseRoles = Role::where('is_base_role', true)->get();
-        $now       = now();
-        $count     = 0;
-
-        foreach ($baseMenus as $menuData) {
-            $menu = Menu::where('name', $menuData['name'])->first();
-
-            if (! $menu) {
-                continue;
-            }
-
-            // Roles que pueden ver este menú (desde config o todos los base)
-            $allowedRoleNames = $menuData['roles'] ?? null;
-
-            foreach ($baseRoles as $role) {
-                $disabled = false;
-
-                // Si el menú define roles específicos, los demás quedan disabled
-                if ($allowedRoleNames !== null) {
-                    $disabled = ! in_array($role->name, $allowedRoleNames, true);
-                }
-
-                DB::table($table)->updateOrInsert(
-                    ['menu_id' => $menu->id, 'role_id' => $role->id],
-                    ['disabled' => $disabled, 'updated_at' => $now, 'created_at' => $now]
-                );
-
-                $count++;
-            }
-        }
-
-        $this->command?->info("  ✓ Relaciones menú-rol: {$count}");
     }
 }

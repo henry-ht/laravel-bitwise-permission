@@ -627,6 +627,7 @@ public function render()
 
 ```
 laravel-bitwise-permission/
+├── LICENSE
 ├── composer.json
 ├── README.md
 ├── config/
@@ -649,8 +650,10 @@ laravel-bitwise-permission/
 │       │   └── menus/
 │       └── pages/                 ← páginas que montan los componentes
 └── src/
-    ├── BitwisePermissionServiceProvider.php
-    ├── BitwisePermissionRoutes.php
+    ├── Routes/
+    │   ├── BitwisePermissionRoutes.php
+    ├── Providers/
+    │   ├── BitwisePermissionServiceProvider.php
     ├── Models/
     │   ├── Role.php
     │   ├── Permission.php

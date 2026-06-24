@@ -22,6 +22,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dashboard Route
+    |--------------------------------------------------------------------------
+    |
+    | Ruta a la que se redirigirá el usuario cuando salga del módulo
+    | de permisos.
+    |
+    */
+
+    // 'dashboard_route' => env('BWP_DASHBOARD_ROUTE', '/'),
+    // 'dashboard_route' => "dashboard",
+
+    /*
+    |--------------------------------------------------------------------------
     | Gate de acceso a la UI del paquete
     |--------------------------------------------------------------------------
     | Callback que recibe el usuario autenticado y retorna bool.
@@ -47,7 +60,7 @@ return [
     //     // return $user->hasRole('super_admin');
     //     // return $user->is_admin;
     // },
-    'gate' => fn($user) => $user->role?->name === 'super_admin',
+    // 'gate' => fn($user) => $user->role?->name === 'super_admin',
 
     /*
     |--------------------------------------------------------------------------
@@ -187,7 +200,7 @@ return [
         [
             'name'        => 'dashboard',
             'public_name' => 'Dashboard',
-            'patch'       => 'home',
+            'patch'       => 'dashboard',
             'icon'        => 'fa-solid fa-house',
             'order'       => 1,
             'roles'       => ['super_admin', 'admin', 'user'],
@@ -208,6 +221,7 @@ return [
         //     'icon'        => 'fa-solid fa-users-line',
         //     'order'       => 2,
         //     'roles'       => ['super_admin', 'admin'],
+        //     'children'    => []
         // ],
     ],
 

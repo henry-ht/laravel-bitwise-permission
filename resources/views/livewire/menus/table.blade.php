@@ -12,9 +12,9 @@
         @forelse($menus as $menu)
             <li class="bwp-menu-item">
                 <div class="bwp-menu-item__row">
-                    @if(isset($menu->icon) && $menu->icon)
-                        {{-- <span style="color:var(--bwp-accent);width:16px;text-align:center;">{{ $menu->icon }}</span> --}}
-                    @endif
+                    {{-- @if(isset($menu->icon) && $menu->icon)
+                        <span style="color:var(--bwp-accent);width:16px;text-align:center;">{{ $menu->icon }}</span>
+                    @endif --}}
                     <span style="font-weight:600;color:var(--bwp-text);flex:1;">{{ $menu->public_name }}</span>
                     <code style="font-size:0.72rem;color:var(--bwp-dim);">{{ $menu->patch }}</code>
                     <span style="font-size:0.72rem;color:var(--bwp-dim);">orden: {{ $menu->order }}</span>
