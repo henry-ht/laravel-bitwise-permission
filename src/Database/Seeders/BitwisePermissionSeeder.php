@@ -154,9 +154,9 @@ class BitwisePermissionSeeder extends Seeder
             }
 
             foreach ($routeAccesses as $routeName => $accessValue) {
-                if ($routeName === '*') {
-                    continue;
-                }
+                // if ($routeName === '*') {
+                //     continue;
+                // }
 
                 $route = AppRoute::where('name', $routeName)->first();
 
@@ -166,10 +166,7 @@ class BitwisePermissionSeeder extends Seeder
                 }
 
                 $bitNames   = $accessValue > 0 ? BitwiseHelper::decode($accessValue) : [];
-                $permission = Permission::firstOrCreate(
-                    ['access' => $accessValue],
-                    ['name'   => $accessValue === 0 ? 'no access' : implode(' + ', $bitNames)]
-                );
+                $permission = Permission::where('access', $accessValue)->firstOrFail();
 
                 Access::updateOrCreate(
                     ['role_id' => $role->id, 'route_id' => $route->id],

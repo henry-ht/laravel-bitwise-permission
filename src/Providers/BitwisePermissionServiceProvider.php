@@ -14,6 +14,7 @@ use HenryHt\BitwisePermission\Http\Livewire\Roles\RoleFormComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Roles\RoleTableComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Routes\RouteFormComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Routes\RouteTableComponent;
+use HenryHt\BitwisePermission\Middleware\CheckBwpUiGateMiddleware;
 use HenryHt\BitwisePermission\Middleware\CheckPermissionMiddleware;
 use HenryHt\BitwisePermission\Models\AppRoute;
 use HenryHt\BitwisePermission\Models\Menu;
@@ -64,6 +65,9 @@ class BitwisePermissionServiceProvider extends ServiceProvider
         $alias  = config('bitwise-permission.middleware.alias', 'bwp.permission');
 
         $router->aliasMiddleware($alias, CheckPermissionMiddleware::class);
+
+        // Middleware de acceso a la UI del paquete
+        $router->aliasMiddleware('bwp.ui', CheckBwpUiGateMiddleware::class);
     }
 
     // ─────────────────────────────────────────────────────────

@@ -5,8 +5,6 @@ namespace HenryHt\BitwisePermission\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use HenryHt\BitwisePermission\Models\AppRoute;
-use HenryHt\BitwisePermission\Models\Access;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

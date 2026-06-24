@@ -1,6 +1,53 @@
 <?php
 
+$bits = [
+        'view'          => 1,
+        'view_any'      => 2,
+        'create'        => 4,
+        'update'        => 8,
+        'delete'        => 16,
+        'restore'       => 32,
+        'force_delete'  => 64,
+        'change_status' => 128,
+        'assign'        => 256,
+        'support'       => 512,
+
+        // Extensiones personalizadas (ejemplo):
+        // 'export'     => 1024,
+        // 'import'     => 2048,
+        // 'approve'    => 4096,
+    ];
+
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gate de acceso a la UI del paquete
+    |--------------------------------------------------------------------------
+    | Callback que recibe el usuario autenticado y retorna bool.
+    | Define aquí quién puede ver /bwp/roles, /bwp/accesses, etc.
+    |
+    | Ejemplos:
+    |   Con el trait HasPermissionsTrait:
+    |     fn($user) => $user->canViewAny('bwp.*')
+    |
+    |   Por rol:
+    |     fn($user) => in_array($user->role->name, ['super_admin', 'admin'])
+    |
+    |   Por campo en users:
+    |     fn($user) => $user->is_admin === true
+    |
+    |   Solo super_admin (recomendado en producción):
+    |     fn($user) => $user->role?->name === 'super_admin'
+    |
+    | Por defecto (null) → cualquier usuario autenticado puede entrar.
+    */
+    // 'gate' => function ($user) {
+    //     // return $user->canViewAny('bwp.*'); // ejemplo con el trait
+    //     // return $user->hasRole('super_admin');
+    //     // return $user->is_admin;
+    // },
+    'gate' => fn($user) => $user->role?->name === 'super_admin',
 
     /*
     |--------------------------------------------------------------------------
@@ -31,23 +78,7 @@ return [
     |
     | Regla base: sin 'view' (1) ningún otro bit tiene efecto.
     */
-    'bits' => [
-        'view'          => 1,
-        'view_any'      => 2,
-        'create'        => 4,
-        'update'        => 8,
-        'delete'        => 16,
-        'restore'       => 32,
-        'force_delete'  => 64,
-        'change_status' => 128,
-        'assign'        => 256,
-        'support'       => 512,
-
-        // Extensiones personalizadas (ejemplo):
-        // 'export'     => 1024,
-        // 'import'     => 2048,
-        // 'approve'    => 4096,
-    ],
+    'bits' => $bits,
 
     /*
     |--------------------------------------------------------------------------
@@ -63,14 +94,12 @@ return [
             'type'        => 'web',
             'patch'       => '/profile',
             'description' => 'Perfil de usuario',
-            'icon'        => null
         ],
         [
             'name'        => 'password.*',
             'type'        => 'web',
             'patch'       => '/password',
             'description' => 'Cambio de contraseña',
-            'icon'        => null
         ],
     ],
 
@@ -148,6 +177,42 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Menús base
+    |--------------------------------------------------------------------------
+    | Menús que se crean al correr el seeder.
+    | 'roles' define qué roles base los ven habilitados (null = todos).
+    | 'father_name' define el slug del padre si es submenú.
+    */
+    'base_menus' => [
+        [
+            'name'        => 'dashboard',
+            'public_name' => 'Dashboard',
+            'patch'       => 'home',
+            'icon'        => 'fa-solid fa-house',
+            'order'       => 1,
+            'roles'       => ['super_admin', 'admin', 'user'],
+        ],
+        [
+            'name'        => 'profile',
+            'public_name' => 'Mi perfil',
+            'patch'       => 'profile.edit',
+            'icon'        => 'fa-regular fa-user',
+            'order'       => 99,
+            'roles'       => ['super_admin', 'admin', 'user'],
+        ],
+        // Agrega aquí los menús de tu proyecto:
+        // [
+        //     'name'        => 'leads',
+        //     'public_name' => 'Leads',
+        //     'patch'       => 'leads.index',
+        //     'icon'        => 'fa-solid fa-users-line',
+        //     'order'       => 2,
+        //     'roles'       => ['super_admin', 'admin'],
+        // ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | UI — Vistas Livewire
     |--------------------------------------------------------------------------
     | Controla qué vistas del paquete están disponibles.
@@ -156,7 +221,7 @@ return [
     'ui' => [
         'enabled'    => true,
         'route_prefix' => 'bwp',         // acceso en: /bwp/roles, /bwp/accesses...
-        'middleware' => ['web', 'auth'],  // middleware que protege las rutas UI
+        'middleware' => ['web', 'auth'],  // middleware que protege las rutas UI 'bwp.ui'
     ],
 
 ];

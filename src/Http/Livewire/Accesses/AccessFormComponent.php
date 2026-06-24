@@ -11,102 +11,92 @@ use Livewire\Component;
 
 class AccessFormComponent extends Component
 {
-    public ?Access $access  = null;
-    public bool    $isEdit  = false;
+    public ?int $accessId     = null;
+    public bool $isEdit       = false;
 
-    public int    $role_id       = 0;
-    public int    $route_id      = 0;
-    public int    $permission_id = 0;
+    public int   $role_id       = 0;
+    public int   $route_id      = 0;
+    public int   $permission_id = 0;
+    public array $selectedBits  = [];
 
-    // Bits seleccionados visualmente
-    public array $selectedBits = [];
-
-    // Filtro de tipo de rol: 'base' | 'user' | 'all'
-    public string $roleType = 'all';
+    // Valor del permiso actual ANTES de editar — solo informativo
+    public int $currentAccess = 0;
 
     protected function rules(): array
     {
-        $accessTable = (new Access)->getTable();
-        $uniqueRule  = "unique:{$accessTable},route_id,NULL,id,role_id,{$this->role_id}";
-
-        if ($this->isEdit) {
-            $uniqueRule = "unique:{$accessTable},route_id,{$this->access->id},id,role_id,{$this->role_id}";
-        }
-
         return [
             'role_id'       => 'required|integer|min:1',
-            'route_id'      => "required|integer|min:1|{$uniqueRule}",
+            'route_id'      => 'required|integer|min:1',
             'permission_id' => 'required|integer|min:1',
         ];
     }
 
-    public function mount(?int $accessId = null): void
+    public function mount(): void
     {
-        if ($accessId) {
-            $this->access        = Access::with('permission')->findOrFail($accessId);
-            $this->isEdit        = true;
-            $this->role_id       = $this->access->role_id;
-            $this->route_id      = $this->access->route_id;
-            $this->permission_id = $this->access->permission_id;
-
-            // Cargar bits activos del permiso existente
-            $this->selectedBits = BitwiseHelper::decode($this->access->permission->access);
+        if (! $this->accessId) {
+            return;
         }
+
+        $access = Access::with('permission')->find($this->accessId);
+
+        if (! $access) {
+            return;
+        }
+
+        $this->isEdit        = true;
+        $this->role_id       = $access->role_id;
+        $this->route_id      = $access->route_id;
+        $this->permission_id = $access->permission_id;
+        $this->currentAccess = $access->permission->access;
+        $this->selectedBits  = BitwiseHelper::decode($access->permission->access);
     }
 
-    /**
-     * Al cambiar el rol, si estamos editando cargamos los bits actuales
-     * que tiene ese rol sobre la ruta seleccionada.
-     */
     public function updatedRoleId(): void
     {
-        $this->loadCurrentBitsForRoleRoute();
+        $this->loadExistingAccess();
     }
 
     public function updatedRouteId(): void
     {
-        $this->loadCurrentBitsForRoleRoute();
+        $this->loadExistingAccess();
     }
 
-    /**
-     * Carga los bits que ya tiene el rol sobre la ruta — para mostrarlos
-     * pre-seleccionados en el formulario de edición.
-     */
-    protected function loadCurrentBitsForRoleRoute(): void
+    protected function loadExistingAccess(): void
     {
         if (! $this->role_id || ! $this->route_id) {
             return;
         }
 
-        $existing = Access::where('role_id', $this->role_id)
-            ->where('route_id', $this->route_id)
-            ->with('permission')
-            ->first();
+        $existing = Access::where('role_id',  $this->role_id)
+                          ->where('route_id', $this->route_id)
+                          ->with('permission')
+                          ->first();
 
         if ($existing) {
-            $this->selectedBits  = BitwiseHelper::decode($existing->permission->access);
-            $this->permission_id = $existing->permission_id;
-            $this->access        = $existing;
+            $this->accessId      = $existing->id;
             $this->isEdit        = true;
+            $this->permission_id = $existing->permission_id;
+            $this->currentAccess = $existing->permission->access;
+            $this->selectedBits  = BitwiseHelper::decode($existing->permission->access);
         } else {
-            $this->selectedBits  = [];
+            $this->accessId      = null;
+            $this->isEdit        = false;
             $this->permission_id = 0;
-            if (! $this->isEdit) {
-                $this->access = null;
-            }
+            $this->currentAccess = 0;
+            $this->selectedBits  = [];
         }
     }
 
-    /**
-     * Al cambiar los bits seleccionados, busca o crea el permiso.
-     */
     public function updatedSelectedBits(): void
     {
         $value = BitwiseHelper::combine($this->selectedBits);
 
         $permission = Permission::firstOrCreate(
             ['access' => $value],
-            ['name'   => $value === 0 ? 'no access' : implode(' + ', $this->selectedBits)]
+            ['name'   => $value === 0
+                ? 'no access'
+                : implode(' + ', $this->selectedBits)
+            ]
         );
 
         $this->permission_id = $permission->id;
@@ -116,15 +106,8 @@ class AccessFormComponent extends Component
     {
         $this->validate();
 
-        $data = [
-            'role_id'       => $this->role_id,
-            'route_id'      => $this->route_id,
-            'permission_id' => $this->permission_id,
-        ];
-
-        // updateOrCreate porque puede ya existir la combinación rol+ruta
         Access::updateOrCreate(
-            ['role_id' => $this->role_id, 'route_id' => $this->route_id],
+            ['role_id'  => $this->role_id, 'route_id' => $this->route_id],
             ['permission_id' => $this->permission_id]
         );
 
@@ -134,16 +117,7 @@ class AccessFormComponent extends Component
 
     public function render()
     {
-        // Filtrar roles según tipo seleccionado
-        $rolesQuery = Role::orderBy('name');
-
-        if ($this->roleType === 'base') {
-            $rolesQuery->where('is_base_role', true);
-        } elseif ($this->roleType === 'user') {
-            $rolesQuery->where('is_base_role', false);
-        }
-
-        $roles  = $rolesQuery->get();
+        $roles  = Role::orderBy('is_base_role', 'desc')->orderBy('name')->get();
         $routes = AppRoute::orderBy('name')->get();
         $bits   = BitwiseHelper::all();
 
