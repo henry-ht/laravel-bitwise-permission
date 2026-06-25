@@ -95,6 +95,10 @@ php artisan vendor:publish --tag=bwp-all
 
 Crea una migración o agrégalo manualmente:
 
+```bash
+php artisan make:migration add_role_id_to_users_table --table=users
+```
+
 ```php
 Schema::table('users', function (Blueprint $table) {
     $table->foreignId('role_id')
