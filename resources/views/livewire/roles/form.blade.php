@@ -59,12 +59,26 @@
         {{-- Menús --}}
         <div class="bwp-card" style="margin-bottom:1.5rem;">
             <h3 style="font-size:0.9rem;font-weight:700;color:var(--bwp-text);margin-bottom:1rem;">Visibilidad de menú</h3>
+
             @foreach($menus as $menu)
-                <label class="bwp-bit-check" style="margin-bottom:0.5rem;">
+
+                {{-- Padre --}}
+                <label class="bwp-bit-check" style="margin-bottom:0.35rem;">
                     <input type="checkbox" wire:model="menuAccess.{{ $menu->id }}">
                     {{ $menu->public_name }}
                 </label>
+
+                {{-- Hijos --}}
+                @foreach($menu->childrenOrdered as $child)
+                    <label class="bwp-bit-check" style="margin-bottom:0.35rem;margin-left:1.5rem;border-left:2px solid var(--bwp-border);padding-left:0.75rem;">
+                        <input type="checkbox" wire:model="menuAccess.{{ $child->id }}">
+                        <span style="color:var(--bwp-dim);margin-right:0.25rem;">└</span>
+                        {{ $child->public_name }}
+                    </label>
+                @endforeach
+
             @endforeach
+
         </div>
 
         <button type="submit" class="bwp-btn bwp-btn--primary">
