@@ -14,6 +14,123 @@ $bits = [
     'support'       => 512,
 ];
 
+$permissions = [
+    // Sin acceso
+    'no access' => $bits['no_access'],
+
+    // Individuales
+    'view' => $bits['view'],
+    'view any' => $bits['view_any'],
+    'create' => $bits['create'],
+    'update' => $bits['update'],
+    'delete' => $bits['delete'],
+    'restore' => $bits['restore'],
+    'force delete' => $bits['force_delete'],
+    'change status' => $bits['change_status'],
+    'assign' => $bits['assign'],
+    'support' => $bits['support'],
+
+    'read access' => $bits['view']
+        | $bits['view_any'],
+
+    'edit access' => $bits['view']
+        | $bits['update'],
+
+    'create access' => $bits['view']
+        | $bits['create'],
+
+    'create and edit access' => $bits['view']
+        | $bits['create']
+        | $bits['update'],
+
+    'delete access' => $bits['view']
+        | $bits['delete'],
+
+    'restore access' => $bits['view']
+        | $bits['restore'],
+
+    'force delete access' => $bits['view']
+        | $bits['force_delete'],
+
+    'status management access' => $bits['view']
+        | $bits['change_status'],
+
+    'assignment access' => $bits['view']
+        | $bits['assign'],
+
+    'support access' => $bits['view']
+        | $bits['support'],
+
+    // Combinaciones avanzadas
+    'write access' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update'],
+
+    'modify access' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete'],
+
+    'modify access with restore' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['restore'],
+
+    'modify access with force delete' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['restore']
+        | $bits['force_delete'],
+
+    'modify access with status management' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['change_status'],
+
+    'modify access with assignment' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['assign'],
+
+    'modify access with support' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['support'],
+
+    'full management access' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['restore']
+        | $bits['force_delete']
+        | $bits['change_status']
+        | $bits['assign'],
+
+    'full access' => $bits['view']
+        | $bits['view_any']
+        | $bits['create']
+        | $bits['update']
+        | $bits['delete']
+        | $bits['restore']
+        | $bits['force_delete']
+        | $bits['change_status']
+        | $bits['assign']
+        | $bits['support'],
+];
+
 return [
 
     /*
@@ -89,6 +206,8 @@ return [
     */
     'bits' => $bits,
 
+    'base_permissions' => $permissions,
+
     /*
     |--------------------------------------------------------------------------
     | Permisos base del sistema
@@ -145,31 +264,25 @@ return [
     | Permisos por rol
     |--------------------------------------------------------------------------
     | Define qué acceso tiene cada rol sobre cada ruta wildcard.
-    | El valor es la suma de los bits que quieres otorgar.
-    |
-    | Ejemplo:
-    |   view(1) + view_any(2) + create(4) + update(8) + delete(16) = 31
-    |
-    | Puedes usar los helpers:
-    |   \HenryHt\BitwisePermission\Helpers\BitwiseHelper::combine(['view','create','update'])
     */
     'role_permissions' => [
-
         'super_admin' => [
-            // Super admin tiene acceso total a todo (1023 = todos los bits)
-            '*' => 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512,
+            '*' => 'full access',
         ],
 
         'admin' => [
-            'profile.*'  => 1 | 2,       // view + view_any
-            'password.*' => 1 | 8,       // view + update
-            // Agrega más rutas según tu proyecto:
-            // 'users.*'    => 1 | 2 | 4 | 8 | 16,
+            'profile.*'  => 'read access',
+            'password.*' => 'edit access',
+
+            // Ejemplos:
+            // 'users.*' => 'modify access',
+            // 'roles.*' => 'full management access',
+            // 'menus.*' => ['view', 'view any', 'create', 'update'],
         ],
 
         'user' => [
-            'profile.*'  => 1,           // solo view
-            'password.*' => 1 | 8,       // view + update
+            'profile.*'  => 'view',
+            'password.*' => 'edit access',
         ],
 
     ],
@@ -232,95 +345,6 @@ return [
         'enabled'    => true,
         'route_prefix' => 'bwp',         // acceso en: /bwp/roles, /bwp/accesses...
         'middleware' => ['web', 'auth'],  // middleware que protege las rutas UI 'bwp.ui'
-    ],
-
-    'base_permissions' => [
-        // Sin acceso
-        'no access' => $bits['no_access'],
-
-        // Individuales
-        'view'      => $bits['view'],
-        'view any'  => $bits['view_any'],
-        'create' => $bits['create'],
-        'update' => $bits['update'],
-        'delete' => $bits['delete'],
-        'restore' => $bits['restore'],
-        'force delete' => $bits['force_delete'],
-        'change status' => $bits['change_status'],
-        'assign' => $bits['assign'],
-        'support' => $bits['support'],
-
-        // Combinaciones
-        'read access' => $bits['view']
-            | $bits['view_any'],
-
-        'write access' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update'],
-
-        'modify access' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete'],
-
-        'modify access with restore' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['restore'],
-
-        'modify access with force delete' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['restore']
-            | $bits['force_delete'],
-
-        'modify access with status management' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['change_status'],
-
-        'modify access with assignment' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['assign'],
-
-        'modify access with support' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['support'],
-
-        'full management access' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['restore']
-            | $bits['force_delete']
-            | $bits['change_status']
-            | $bits['assign'],
-
-        'full access' => $bits['view']
-            | $bits['view_any']
-            | $bits['create']
-            | $bits['update']
-            | $bits['delete']
-            | $bits['restore']
-            | $bits['force_delete']
-            | $bits['change_status']
-            | $bits['assign']
-            | $bits['support'],
     ],
 
 ];

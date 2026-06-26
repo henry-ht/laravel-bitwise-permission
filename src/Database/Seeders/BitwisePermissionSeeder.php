@@ -29,10 +29,10 @@ class BitwisePermissionSeeder extends Seeder
     {
         $permissions = config('bitwise-permission.base_permissions', []);
 
-        foreach ($permissions as $permission) {
+        foreach ($permissions as $name => $access) {
             Permission::updateOrCreate(
-                ['access' => $permission['access']],
-                ['name' => $permission['name']]
+                ['access' => $access],
+                ['name' => $name]
             );
         }
 
@@ -188,7 +188,7 @@ class BitwisePermissionSeeder extends Seeder
                     continue;
                 }
 
-                $permission = Permission::where('access', $accessValue)->first();
+                $permission = Permission::where('name', $accessValue)->first();
 
                 if (! $permission) {
                     $this->command?->warn("  ⚠ Permiso con access={$accessValue} no encontrado.");
