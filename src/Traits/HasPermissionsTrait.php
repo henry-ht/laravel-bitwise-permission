@@ -243,14 +243,40 @@ trait HasPermissionsTrait
     }
 
     /**
-     * Convierte nombre de ruta a wildcard.
-     * 'leads.index' → 'leads.*'
-     * 'leads.*'     → 'leads.*'
+     * Convierte una ruta resource de Laravel a wildcard.
+     *
+     * Ejemplos:
+     *  - leads.index   -> leads.*
+     *  - leads.create  -> leads.*
+     *  - leads.store   -> leads.*
+     *  - leads.show    -> leads.*
+     *  - leads.edit    -> leads.*
+     *  - leads.update  -> leads.*
+     *  - leads.destroy -> leads.*
+     *
+     * Las demás rutas permanecen igual:
+     *  - web.dashboard      -> web.dashboard
+     *  - web.orders         -> web.orders
+     *  - web.invoice.ticket -> web.invoice.ticket
      */
     protected function bwpToWildcard(string $routeName): string
     {
+        $resourceActions = [
+            'index',
+            'create',
+            'store',
+            'show',
+            'edit',
+            'update',
+            'destroy',
+        ];
+
         $parts = explode('.', $routeName);
-        $parts[count($parts) - 1] = '*';
+
+        if (in_array(end($parts), $resourceActions, true)) {
+            $parts[array_key_last($parts)] = '*';
+        }
+
         return implode('.', $parts);
     }
 
