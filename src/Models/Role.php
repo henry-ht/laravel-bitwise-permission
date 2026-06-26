@@ -29,6 +29,10 @@ class Role extends Model
         return $this->hasMany(Access::class);
     }
 
+    // public function user(){
+    //     return $this->hasOne(config('bitwise-permission.user_model'));
+    // }
+
     public function menus(): BelongsToMany
     {
         $prefix = config('bitwise-permission.table_prefix', 'bwp_');

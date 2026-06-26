@@ -1,22 +1,18 @@
 <?php
 
 $bits = [
-        'view'          => 1,
-        'view_any'      => 2,
-        'create'        => 4,
-        'update'        => 8,
-        'delete'        => 16,
-        'restore'       => 32,
-        'force_delete'  => 64,
-        'change_status' => 128,
-        'assign'        => 256,
-        'support'       => 512,
-
-        // Extensiones personalizadas (ejemplo):
-        // 'export'     => 1024,
-        // 'import'     => 2048,
-        // 'approve'    => 4096,
-    ];
+    'no_access'     => 0,
+    'view'          => 1,
+    'view_any'      => 2,
+    'create'        => 4,
+    'update'        => 8,
+    'delete'        => 16,
+    'restore'       => 32,
+    'force_delete'  => 64,
+    'change_status' => 128,
+    'assign'        => 256,
+    'support'       => 512,
+];
 
 return [
 
@@ -128,19 +124,19 @@ return [
             'name'        => 'super_admin',
             'public_name' => 'Super Administrador',
             'description' => 'Acceso total al sistema',
-            'is_base_role'=> true,
+            'is_base_role' => true,
         ],
         [
             'name'        => 'admin',
             'public_name' => 'Administrador',
             'description' => 'Administrador del sistema',
-            'is_base_role'=> true,
+            'is_base_role' => true,
         ],
         [
             'name'        => 'user',
             'public_name' => 'Usuario',
             'description' => 'Usuario estándar',
-            'is_base_role'=> true,
+            'is_base_role' => true,
         ],
     ],
 
@@ -236,6 +232,95 @@ return [
         'enabled'    => true,
         'route_prefix' => 'bwp',         // acceso en: /bwp/roles, /bwp/accesses...
         'middleware' => ['web', 'auth'],  // middleware que protege las rutas UI 'bwp.ui'
+    ],
+
+    'base_permissions' => [
+        // Sin acceso
+        'no access' => $bits['no_access'],
+
+        // Individuales
+        'view'      => $bits['view'],
+        'view any'  => $bits['view_any'],
+        'create' => $bits['create'],
+        'update' => $bits['update'],
+        'delete' => $bits['delete'],
+        'restore' => $bits['restore'],
+        'force delete' => $bits['force_delete'],
+        'change status' => $bits['change_status'],
+        'assign' => $bits['assign'],
+        'support' => $bits['support'],
+
+        // Combinaciones
+        'read access' => $bits['view']
+            | $bits['view_any'],
+
+        'write access' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update'],
+
+        'modify access' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete'],
+
+        'modify access with restore' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['restore'],
+
+        'modify access with force delete' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['restore']
+            | $bits['force_delete'],
+
+        'modify access with status management' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['change_status'],
+
+        'modify access with assignment' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['assign'],
+
+        'modify access with support' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['support'],
+
+        'full management access' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['restore']
+            | $bits['force_delete']
+            | $bits['change_status']
+            | $bits['assign'],
+
+        'full access' => $bits['view']
+            | $bits['view_any']
+            | $bits['create']
+            | $bits['update']
+            | $bits['delete']
+            | $bits['restore']
+            | $bits['force_delete']
+            | $bits['change_status']
+            | $bits['assign']
+            | $bits['support'],
     ],
 
 ];

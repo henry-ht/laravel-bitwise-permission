@@ -27,32 +27,12 @@ class BitwisePermissionSeeder extends Seeder
     // ─────────────────────────────────────────────────────────
     protected function seedPermissions(): void
     {
-        $bits      = config('bitwise-permission.bits', []);
-        $bitValues = array_values($bits);
-        $viewBit   = $bits['view'] ?? 1;
-        $count     = count($bitValues);
-        $total     = (1 << $count) - 1;
+        $permissions = config('bitwise-permission.base_permissions', []);
 
-        Permission::updateOrCreate(['access' => 0], ['name' => 'no access']);
-
-        for ($mask = 1; $mask <= $total; $mask++) {
-            $value = 0;
-            $names = [];
-
-            foreach ($bitValues as $i => $bit) {
-                if ($mask & (1 << $i)) {
-                    $value |= $bit;
-                    $names[] = array_keys($bits)[$i];
-                }
-            }
-
-            if (! ($value & $viewBit)) {
-                continue;
-            }
-
+        foreach ($permissions as $permission) {
             Permission::updateOrCreate(
-                ['access' => $value],
-                ['name'   => implode(' + ', $names)]
+                ['access' => $permission['access']],
+                ['name' => $permission['name']]
             );
         }
 
