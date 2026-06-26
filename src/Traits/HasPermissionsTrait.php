@@ -209,10 +209,14 @@ trait HasPermissionsTrait
     public function getMenu(): \Illuminate\Database\Eloquent\Collection
     {
         return Menu::root()
-            ->forRole($this->role_id)
-            ->orderBy('order')
-            ->with('childrenOrdered')
-            ->get();
+                ->forRole($this->role_id)
+                ->orderBy('order')
+                ->with([
+                    'childrenOrdered' => function ($query) {
+                        $query->forRole($this->role_id);
+                    }
+                ])
+                ->get();
     }
 
     // ─────────────────────────────────────────────────────────

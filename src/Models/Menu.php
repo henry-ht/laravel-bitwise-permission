@@ -58,9 +58,15 @@ class Menu extends Model
 
     public function scopeForRole($query, int $roleId)
     {
-        return $query->whereHas('roles', function ($q) use ($roleId) {
-            $q->where('role_id', $roleId)
-              ->where('disabled', false);
+        $prefix = config('bitwise-permission.table_prefix', 'bwp_');
+        $table  = "{$prefix}menu_role";
+
+        return $query->whereExists(function ($q) use ($roleId, $table) {
+            $q->select(\DB::raw(1))
+            ->from($table)
+            ->whereColumn("{$table}.menu_id", 'bwp_menus.id')
+            ->where("{$table}.role_id",  $roleId)
+            ->where("{$table}.disabled", false);
         });
     }
 }
