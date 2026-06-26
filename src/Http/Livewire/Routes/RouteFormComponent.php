@@ -59,7 +59,7 @@ class RouteFormComponent extends Component
             : AppRoute::create($data);
 
         session()->flash('bwp_success', $this->isEdit ? 'Ruta actualizada.' : 'Ruta creada.');
-        $this->redirect(route('bwp.routes.index'));
+        // $this->redirect(route('bwp.routes.index'));
     }
 
     public function render()

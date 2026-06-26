@@ -112,7 +112,7 @@ class AccessFormComponent extends Component
         );
 
         session()->flash('bwp_success', 'Acceso guardado correctamente.');
-        $this->redirect(route('bwp.accesses.index'));
+        // $this->redirect(route('bwp.accesses.index'));
     }
 
     public function render()

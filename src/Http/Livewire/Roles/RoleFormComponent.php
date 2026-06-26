@@ -94,7 +94,7 @@ class RoleFormComponent extends Component
         $this->role->menus()->sync($menuSync);
 
         session()->flash('bwp_success', $this->isEdit ? 'Rol actualizado.' : 'Rol creado correctamente.');
-        $this->redirect(route('bwp.roles.index'));
+        // $this->redirect(route('bwp.roles.index'));
     }
 
     public function render()

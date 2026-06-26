@@ -61,7 +61,7 @@ class MenuFormComponent extends Component
             : Menu::create($data);
 
         session()->flash('bwp_success', $this->isEdit ? 'Menú actualizado.' : 'Menú creado.');
-        $this->redirect(route('bwp.menus.index'));
+        // $this->redirect(route('bwp.menus.index'));
     }
 
     public function render()
