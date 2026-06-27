@@ -9,6 +9,7 @@ use HenryHt\BitwisePermission\Http\Livewire\Accesses\AccessTableComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Menus\MenuFormComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Menus\MenuRoleComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Menus\MenuTableComponent;
+use HenryHt\BitwisePermission\Http\Livewire\Permissions\PermissionFormComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Permissions\PermissionTableComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Roles\RoleFormComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Roles\RoleTableComponent;
@@ -147,6 +148,7 @@ class BitwisePermissionServiceProvider extends ServiceProvider
         Livewire::component('bwp-roles-form', RoleFormComponent::class);
 
         Livewire::component('bwp-permissions-table', PermissionTableComponent::class);
+        Livewire::component('bwp-permissions-form',  PermissionFormComponent::class); // ← nuevo
 
         Livewire::component('bwp-routes-table', RouteTableComponent::class);
         Livewire::component('bwp-routes-form', RouteFormComponent::class);
