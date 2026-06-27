@@ -106,6 +106,11 @@ Schema::table('users', function (Blueprint $table) {
           ->constrained('bwp_roles')
           ->nullOnDelete();
 });
+
+
+Schema::table('users', function (Blueprint $table) {
+    $table->dropConstrainedForeignId('role_id');
+});
 ```
 
 ### 2. Incluye el trait en el modelo User
