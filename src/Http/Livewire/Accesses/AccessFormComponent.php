@@ -11,16 +11,16 @@ use Livewire\Component;
 
 class AccessFormComponent extends Component
 {
-    public ?int $accessId     = null;
-    public bool $isEdit       = false;
+    public ?int $accessId    = null;
+    public bool $isEdit      = false;
 
     public int   $role_id       = 0;
     public int   $route_id      = 0;
     public int   $permission_id = 0;
-    public array $selectedBits  = [];
 
-    // Valor del permiso actual ANTES de editar — solo informativo
-    public int $currentAccess = 0;
+    // Solo informativo — bits activos del permiso seleccionado
+    public array $selectedBits  = [];
+    public int   $currentAccess = 0;
 
     protected function rules(): array
     {
@@ -61,6 +61,25 @@ class AccessFormComponent extends Component
         $this->loadExistingAccess();
     }
 
+    /**
+     * Al cambiar el select de permiso — actualiza los bits informativos.
+     */
+    public function updatedPermissionId(): void
+    {
+        if (! $this->permission_id) {
+            $this->selectedBits  = [];
+            $this->currentAccess = 0;
+            return;
+        }
+
+        $permission = Permission::find($this->permission_id);
+
+        if ($permission) {
+            $this->currentAccess = $permission->access;
+            $this->selectedBits  = BitwiseHelper::decode($permission->access);
+        }
+    }
+
     protected function loadExistingAccess(): void
     {
         if (! $this->role_id || ! $this->route_id) {
@@ -87,21 +106,6 @@ class AccessFormComponent extends Component
         }
     }
 
-    public function updatedSelectedBits(): void
-    {
-        $value = BitwiseHelper::combine($this->selectedBits);
-
-        $permission = Permission::firstOrCreate(
-            ['access' => $value],
-            ['name'   => $value === 0
-                ? 'no access'
-                : implode(' + ', $this->selectedBits)
-            ]
-        );
-
-        $this->permission_id = $permission->id;
-    }
-
     public function save(): void
     {
         $this->validate();
@@ -112,15 +116,20 @@ class AccessFormComponent extends Component
         );
 
         session()->flash('bwp_success', 'Acceso guardado correctamente.');
-        // $this->redirect(route('bwp.accesses.index'));
+        $this->redirect(route('bwp.accesses.index'));
     }
 
     public function render()
     {
-        $roles  = Role::orderBy('is_base_role', 'desc')->orderBy('name')->get();
-        $routes = AppRoute::orderBy('name')->get();
-        $bits   = BitwiseHelper::all();
+        $roles       = Role::orderBy('is_base_role', 'desc')->orderBy('name')->get();
+        $routes      = AppRoute::orderBy('name')->get();
+        $permissions = Permission::orderBy('access')->get();
 
-        return view('bwp::livewire.accesses.form', compact('roles', 'routes', 'bits'));
+        // Bits sin no_access para la visualización
+        $bits = collect(BitwiseHelper::all())
+            ->filter(fn($v) => $v > 0)
+            ->all();
+
+        return view('bwp::livewire.accesses.form', compact('roles', 'routes', 'permissions', 'bits'));
     }
 }

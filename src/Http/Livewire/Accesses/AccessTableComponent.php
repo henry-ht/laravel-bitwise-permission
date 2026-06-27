@@ -16,7 +16,7 @@ class AccessTableComponent extends Component
     public string $search      = '';
     public int    $roleFilter  = 0;
     public int    $routeFilter = 0;
-    public string $roleType    = 'all'; // 'all' | 'base' | 'user'
+    public string $roleType    = 'all';
 
     protected $queryString = [
         'search'     => ['except' => ''],
@@ -42,15 +42,19 @@ class AccessTableComponent extends Component
             )
             ->when($this->search, fn($q) =>
                 $q->whereHas('route', fn($r) => $r->where('name', 'like', "%{$this->search}%"))
-                  ->orWhereHas('role',  fn($r) => $r->where('name', 'like', "%{$this->search}%")
-                                                    ->orWhere('public_name', 'like', "%{$this->search}%"))
+                  ->orWhereHas('role', fn($r) => $r->where('name', 'like', "%{$this->search}%")
+                                                   ->orWhere('public_name', 'like', "%{$this->search}%"))
             )
             ->orderBy('role_id')
             ->paginate(20);
 
         $roles  = Role::orderBy('name')->get();
         $routes = AppRoute::orderBy('name')->get();
-        $bits   = BitwiseHelper::all();
+
+        // Excluir no_access (0) — no es un bit real, no se puede evaluar con &
+        $bits = collect(BitwiseHelper::all())
+            ->filter(fn($value) => $value > 0)
+            ->all();
 
         return view('bwp::livewire.accesses.table', compact('accesses', 'roles', 'routes', 'bits'));
     }

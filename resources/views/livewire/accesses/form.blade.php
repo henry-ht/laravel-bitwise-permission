@@ -33,9 +33,7 @@
                     <select wire:model.live="route_id" class="bwp-select">
                         <option value="0">Seleccionar ruta...</option>
                         @foreach($routes as $route)
-                            <option value="{{ $route->id }}">
-                                {{ $route->name }}
-                            </option>
+                            <option value="{{ $route->id }}">{{ $route->name }}</option>
                         @endforeach
                     </select>
                     @error('route_id')
@@ -44,73 +42,62 @@
                 </div>
             </div>
 
-            {{-- Permiso actual --}}
             @if($isEdit && $role_id && $route_id)
                 <div class="bwp-alert bwp-alert--info" style="margin-top:0.75rem;margin-bottom:0;">
                     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
-                        <span>Permiso actual — modifica los bits y guarda.</span>
-                        <span style="font-weight:700;color:var(--bwp-accent);font-size:1rem;">
-                            {{ $currentAccess }}
+                        <span>Esta combinación ya tiene un permiso asignado.</span>
+                        <span style="font-weight:700;color:var(--bwp-accent);">
+                            valor actual: {{ $currentAccess }}
                         </span>
                     </div>
                 </div>
             @endif
         </div>
 
-        {{-- Bits --}}
+        {{-- Permiso --}}
         <div class="bwp-card">
-            <p class="bwp-card__title">Permisos (bits)</p>
-            <p class="bwp-hint" style="margin-bottom:1rem;">
-                Sin <strong style="color:var(--bwp-text);">view</strong> seleccionado
-                el usuario no puede entrar a la vista aunque tenga otros bits activos.
-            </p>
+            <p class="bwp-card__title">Permiso</p>
 
-            {{-- Grid — wire:model.live maneja checked, NO poner 'checked' manual --}}
-            <div class="bwp-bit-grid">
-                @foreach($bits as $bitName => $bitValue)
-                    <label class="bwp-bit-check">
-                        <input type="checkbox"
-                               wire:model.live="selectedBits"
-                               value="{{ $bitName }}">
-                        {{ $bitName }}
-                        <span class="bwp-bit-value">{{ $bitValue }}</span>
-                    </label>
-                @endforeach
+            <div class="bwp-field">
+                <label class="bwp-label">Seleccionar permiso</label>
+                <select wire:model.live="permission_id" class="bwp-select">
+                    <option value="0">Seleccionar permiso...</option>
+                    @foreach($permissions as $permission)
+                        <option value="{{ $permission->id }}">
+                            {{ $permission->name }}
+                            ({{ $permission->access }})
+                        </option>
+                    @endforeach
+                </select>
+                @error('permission_id')
+                    <p class="bwp-error">{{ $message }}</p>
+                @enderror
             </div>
 
-            {{-- Resultado --}}
-            <div class="bwp-bit-result">
-                @php
-                    $resultValue = array_sum(
-                        array_map(
-                            fn($b) => config("bitwise-permission.bits.{$b}", 0),
-                            $selectedBits
-                        )
-                    );
-                @endphp
-
-                <div>
-                    <p class="bwp-bit-result__label">Valor resultante</p>
-                    <span class="bwp-bit-result__value"
-                          style="{{ $resultValue === 0 ? 'color:var(--bwp-dim)' : '' }}">
-                        {{ $resultValue }}
-                    </span>
-                </div>
-
-                <div class="bwp-bits">
-                    @if($resultValue === 0)
-                        <span class="bwp-badge bwp-badge--muted">no access</span>
-                    @else
-                        @foreach($selectedBits as $bit)
-                            <span class="bwp-bit bwp-bit--active">{{ $bit }}</span>
+            {{-- Bits activos del permiso seleccionado — solo informativo --}}
+            @if($permission_id && $currentAccess > 0)
+                <div class="bwp-bit-result" style="margin-top:0.75rem;">
+                    <div>
+                        <p class="bwp-bit-result__label">Valor</p>
+                        <span class="bwp-bit-result__value">{{ $currentAccess }}</span>
+                    </div>
+                    <div class="bwp-bits">
+                        @foreach($bits as $bitName => $bitValue)
+                            @if(($currentAccess & $bitValue) === $bitValue)
+                                <span class="bwp-bit bwp-bit--active">{{ $bitName }}</span>
+                            @endif
                         @endforeach
-                    @endif
+                    </div>
                 </div>
-            </div>
-
-            @error('permission_id')
-                <p class="bwp-error" style="margin-top:0.5rem;">{{ $message }}</p>
-            @enderror
+            @elseif($permission_id)
+                <div class="bwp-bit-result" style="margin-top:0.75rem;">
+                    <div>
+                        <p class="bwp-bit-result__label">Valor</p>
+                        <span class="bwp-bit-result__value" style="color:var(--bwp-dim);">0</span>
+                    </div>
+                    <span class="bwp-badge bwp-badge--muted">no access</span>
+                </div>
+            @endif
         </div>
 
         <button type="submit" class="bwp-btn bwp-btn--primary">

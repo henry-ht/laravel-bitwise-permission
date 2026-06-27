@@ -9,7 +9,7 @@
         <a href="{{ route('bwp.accesses.create') }}" class="bwp-btn bwp-btn--primary">+ Nuevo acceso</a>
     </div>
 
-    {{-- Toolbar: búsqueda + filtros --}}
+    {{-- Toolbar --}}
     <div class="bwp-toolbar">
 
         <div class="bwp-search">
@@ -33,23 +33,13 @@
             @endforeach
         </select>
 
-        {{-- Filtro tipo de rol --}}
         <div class="bwp-role-type-tabs">
-            <button type="button"
-                    wire:click="$set('roleType','all')"
-                    class="bwp-role-type-tab {{ $roleType === 'all'  ? 'active' : '' }}">
-                Todos
-            </button>
-            <button type="button"
-                    wire:click="$set('roleType','base')"
-                    class="bwp-role-type-tab {{ $roleType === 'base' ? 'active' : '' }}">
-                Base
-            </button>
-            <button type="button"
-                    wire:click="$set('roleType','user')"
-                    class="bwp-role-type-tab {{ $roleType === 'user' ? 'active' : '' }}">
-                Usuario
-            </button>
+            <button type="button" wire:click="$set('roleType','all')"
+                    class="bwp-role-type-tab {{ $roleType === 'all'  ? 'active' : '' }}">Todos</button>
+            <button type="button" wire:click="$set('roleType','base')"
+                    class="bwp-role-type-tab {{ $roleType === 'base' ? 'active' : '' }}">Base</button>
+            <button type="button" wire:click="$set('roleType','user')"
+                    class="bwp-role-type-tab {{ $roleType === 'user' ? 'active' : '' }}">Usuario</button>
         </div>
 
     </div>
@@ -78,20 +68,34 @@
                                 @endif
                             </div>
                         </td>
+
                         <td>
                             <code style="font-size:0.75rem;color:var(--bwp-accent);">
                                 {{ $access->route->name }}
                             </code>
                         </td>
+
+                        {{-- Nombre del permiso + valor numérico --}}
                         <td>
-                            <span class="bwp-badge bwp-badge--muted">
-                                {{ $access->permission->access }}
-                            </span>
+                            @if($access->permission->access === 0)
+                                <span class="bwp-badge bwp-badge--muted">no access</span>
+                            @else
+                                <div style="display:flex;flex-direction:column;gap:0.2rem;">
+                                    <span style="color:var(--bwp-text);font-size:0.8rem;font-weight:500;">
+                                        {{ $access->permission->name }}
+                                    </span>
+                                    <span style="color:var(--bwp-dim);font-size:0.7rem;">
+                                        valor: {{ $access->permission->access }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
+
+                        {{-- Bits activos — no_access (0) excluido en el componente --}}
                         <td>
                             <div class="bwp-bits">
                                 @if($access->permission->access === 0)
-                                    <span class="bwp-bit bwp-bit--inactive">no access</span>
+                                    <span class="bwp-bit bwp-bit--inactive">sin acceso</span>
                                 @else
                                     @foreach($bits as $bitName => $bitValue)
                                         @if(($access->permission->access & $bitValue) === $bitValue)
@@ -101,6 +105,7 @@
                                 @endif
                             </div>
                         </td>
+
                         <td>
                             <div class="bwp-actions">
                                 <a href="{{ route('bwp.accesses.edit', $access) }}"
