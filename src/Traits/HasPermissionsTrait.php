@@ -6,6 +6,7 @@ use HenryHt\BitwisePermission\Models\Access;
 use HenryHt\BitwisePermission\Models\AppRoute;
 use HenryHt\BitwisePermission\Models\Role;
 use HenryHt\BitwisePermission\Models\Menu;
+use HenryHt\BitwisePermission\Models\Permission;
 
 /**
  * Trait HasPermissionsTrait
@@ -288,5 +289,127 @@ trait HasPermissionsTrait
     {
         $roleConfig = config("bitwise-permission.role_permissions.{$this->bwpRole?->name}", []);
         return $roleConfig['*'] ?? 0;
+    }
+    
+    // Agrega estos métodos al trait HasPermissionsTrait
+    // dentro de la sección de helpers públicos
+
+    // ─────────────────────────────────────────────────────────
+    // Gestión dinámica de permisos
+    // ─────────────────────────────────────────────────────────
+
+    /**
+     * Cambia el permiso del rol del usuario para una ruta específica.
+     *
+     * Uso:
+     *   // Por nombre de permiso definido en config base_permissions
+     *   $user->setPermission('leads.*', 'modify access');
+     *
+     *   // Por valor numérico directo
+     *   $user->setPermission('leads.*', 13);
+     *
+     * @param  string     $routeName       Wildcard o nombre de ruta: 'leads.*', 'leads.index'
+     * @param  string|int $permissionValue Nombre del permiso (string) o valor bitwise (int)
+     * @return bool                        true si se guardó, false si la ruta o permiso no existe
+     */
+    public function setPermission(string $routeName, string|int $permissionValue): bool
+    {
+        $wildcard = $this->bwpToWildcard($routeName);
+
+        // Resolver la ruta
+        $route = AppRoute::where('name', $wildcard)->first();
+
+        if (! $route) {
+            return false;
+        }
+
+        // Resolver el permiso — por nombre o por valor numérico
+        $permission = is_string($permissionValue)
+            ? Permission::where('name', $permissionValue)->first()
+            : Permission::where('access', $permissionValue)->first();
+
+        if (! $permission) {
+            return false;
+        }
+
+        // Actualizar o crear el acceso para el rol del usuario
+        Access::updateOrCreate(
+            [
+                'role_id'  => $this->role_id,
+                'route_id' => $route->id,
+            ],
+            [
+                'permission_id' => $permission->id,
+            ]
+        );
+
+        // Limpiar cache para que el nuevo permiso aplique inmediatamente
+        unset($this->bwpAccessCache[$wildcard]);
+
+        return true;
+    }
+
+    /**
+     * Cambia permisos en múltiples rutas de una sola vez.
+     *
+     * Uso:
+     *   $user->setPermissions([
+     *       'leads.*'    => 'modify access',
+     *       'deals.*'    => 'read access',
+     *       'contacts.*' => 'no access',
+     *   ]);
+     *
+     * @param  array<string, string|int> $permissions  ['ruta' => 'nombre permiso' | int]
+     * @return array<string, bool>                     ['ruta' => true|false] resultado por ruta
+     */
+    public function setPermissions(array $permissions): array
+    {
+        $results = [];
+
+        foreach ($permissions as $routeName => $permissionValue) {
+            $results[$routeName] = $this->setPermission($routeName, $permissionValue);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Retorna el permiso actual del usuario para una ruta.
+     * Útil para pre-cargar formularios de gestión de permisos.
+     *
+     * @param  string   $routeName  Wildcard o nombre de ruta
+     * @return ?Permission          null si no tiene acceso configurado
+     */
+    public function getPermissionFor(string $routeName): ?Permission
+    {
+        $wildcard = $this->bwpToWildcard($routeName);
+        $route    = AppRoute::where('name', $wildcard)->first();
+
+        if (! $route) {
+            return null;
+        }
+
+        $access = Access::where('role_id',  $this->role_id)
+                        ->where('route_id', $route->id)
+                        ->with('permission')
+                        ->first();
+
+        return $access?->permission;
+    }
+
+    /**
+     * Retorna todos los permisos del usuario agrupados por ruta.
+     * Útil para renderizar una vista completa de permisos.
+     *
+     * @return \Illuminate\Support\Collection  [route_name => Permission]
+     */
+    public function getAllPermissions(): \Illuminate\Support\Collection
+    {
+        return Access::where('role_id', $this->role_id)
+            ->with(['route', 'permission'])
+            ->get()
+            ->mapWithKeys(fn($access) => [
+                $access->route->name => $access->permission
+            ]);
     }
 }
