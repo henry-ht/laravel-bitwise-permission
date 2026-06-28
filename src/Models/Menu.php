@@ -61,10 +61,10 @@ class Menu extends Model
         $prefix = config('bitwise-permission.table_prefix', 'bwp_');
         $table  = "{$prefix}menu_role";
 
-        return $query->whereExists(function ($q) use ($roleId, $table) {
+        return $query->whereExists(function ($q) use ($roleId, $table, $prefix) {
             $q->select(\DB::raw(1))
             ->from($table)
-            ->whereColumn("{$table}.menu_id", 'bwp_menus.id')
+            ->whereColumn("{$table}.menu_id", "{$prefix}menus.id")
             ->where("{$table}.role_id",  $roleId)
             ->where("{$table}.disabled", false);
         });
