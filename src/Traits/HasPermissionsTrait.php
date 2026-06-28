@@ -412,4 +412,160 @@ trait HasPermissionsTrait
                 $access->route->name => $access->permission
             ]);
     }
+    
+    // Agrega estos métodos al trait HasPermissionsTrait
+    // en la sección de "Gestión dinámica de permisos"
+
+    // ─────────────────────────────────────────────────────────
+    // Gestión dinámica de menú
+    // ─────────────────────────────────────────────────────────
+
+    /**
+     * Habilita o deshabilita un ítem de menú para el rol del usuario.
+     * Si el ítem tiene padre, actualiza el padre automáticamente:
+     *  - Si se habilita un hijo → habilita el padre
+     *  - Si se deshabilita un hijo → deshabilita el padre solo si
+     *    no quedan otros hijos habilitados
+     *
+     * Uso:
+     *   $user->setMenuAccess('leads', true);   // habilitar
+     *   $user->setMenuAccess('leads', false);  // deshabilitar
+     *   $user->setMenuAccess(3, true);         // por ID
+     *
+     * @param  string|int $menuIdentifier  Nombre (slug) o ID del ítem de menú
+     * @param  bool       $enabled         true = habilitar, false = deshabilitar
+     * @return bool                        false si el menú no existe
+     */
+    public function setMenuAccess(string|int $menuIdentifier, bool $enabled): bool
+    {
+        $menu = is_int($menuIdentifier)
+            ? Menu::find($menuIdentifier)
+            : Menu::where('name', $menuIdentifier)->first();
+
+        if (! $menu) {
+            return false;
+        }
+
+        $this->updateMenuRole($menu->id, $enabled);
+
+        // Propagar cambio al padre si existe
+        if ($menu->father_id) {
+            $this->syncParentMenuAccess($menu->father_id);
+        }
+
+        return true;
+    }
+
+    /**
+     * Habilita o deshabilita múltiples ítems de menú de una vez.
+     *
+     * Uso:
+     *   $user->setMenuAccesses([
+     *       'leads'        => true,
+     *       'leads-create' => true,
+     *       'deals'        => false,
+     *   ]);
+     *
+     * @param  array<string|int, bool> $items  [nombre|id => bool]
+     * @return array<string, bool>             resultado por ítem
+     */
+    public function setMenuAccesses(array $items): array
+    {
+        $results = [];
+
+        foreach ($items as $identifier => $enabled) {
+            $results[$identifier] = $this->setMenuAccess($identifier, $enabled);
+        }
+
+        return $results;
+    }
+
+    /**
+     * Verifica si un ítem de menú está habilitado para el rol del usuario.
+     *
+     * @param  string|int $menuIdentifier  Nombre o ID del ítem
+     * @return bool
+     */
+    public function hasMenuAccess(string|int $menuIdentifier): bool
+    {
+        $menu = is_int($menuIdentifier)
+            ? Menu::find($menuIdentifier)
+            : Menu::where('name', $menuIdentifier)->first();
+
+        if (! $menu) {
+            return false;
+        }
+
+        $prefix     = config('bitwise-permission.table_prefix', 'bwp_');
+        $pivotTable = $prefix . 'menu_role';
+
+        $row = \Illuminate\Support\Facades\DB::table($pivotTable)
+            ->where('menu_id', $menu->id)
+            ->where('role_id', $this->role_id)
+            ->first();
+
+        // Si no existe registro → por defecto no tiene acceso
+        return $row ? ! $row->disabled : false;
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Helpers internos de menú
+    // ─────────────────────────────────────────────────────────
+
+    /**
+     * Inserta o actualiza el registro en menu_role.
+     */
+    protected function updateMenuRole(int $menuId, bool $enabled): void
+    {
+        $prefix     = config('bitwise-permission.table_prefix', 'bwp_');
+        $pivotTable = $prefix . 'menu_role';
+        $now        = now();
+
+        \Illuminate\Support\Facades\DB::table($pivotTable)->updateOrInsert(
+            ['menu_id' => $menuId, 'role_id' => $this->role_id],
+            ['disabled' => ! $enabled, 'updated_at' => $now, 'created_at' => $now]
+        );
+    }
+
+    /**
+     * Sincroniza el estado del menú padre según sus hijos:
+     * - Si al menos un hijo está habilitado → habilitar padre
+     * - Si ningún hijo está habilitado → deshabilitar padre
+     * - Propaga recursivamente hacia arriba si el padre también tiene padre
+     */
+    protected function syncParentMenuAccess(int $parentId): void
+    {
+        $prefix     = config('bitwise-permission.table_prefix', 'bwp_');
+        $menuTable  = $prefix . 'menus';
+        $pivotTable = $prefix . 'menu_role';
+
+        // Obtener todos los hijos directos del padre
+        $childIds = \Illuminate\Support\Facades\DB::table($menuTable)
+            ->where('father_id', $parentId)
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($childIds)) {
+            return;
+        }
+
+        // Verificar si algún hijo está habilitado para este rol
+        $hasEnabledChild = \Illuminate\Support\Facades\DB::table($pivotTable)
+            ->whereIn('menu_id', $childIds)
+            ->where('role_id', $this->role_id)
+            ->where('disabled', false)
+            ->exists();
+
+        // Actualizar el padre según el estado de sus hijos
+        $this->updateMenuRole($parentId, $hasEnabledChild);
+
+        // Propagar recursivamente si el padre también tiene un padre
+        $grandParentId = \Illuminate\Support\Facades\DB::table($menuTable)
+            ->where('id', $parentId)
+            ->value('father_id');
+
+        if ($grandParentId) {
+            $this->syncParentMenuAccess($grandParentId);
+        }
+    }
 }
