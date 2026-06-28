@@ -207,6 +207,24 @@ return [
     'bits' => $bits,
 
     'base_permissions' => $permissions,
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Super Admin Role
+    |--------------------------------------------------------------------------
+    | Nombre del rol que tiene acceso total al sistema.
+    | El middleware y el trait retornan acceso total directamente
+    | sin consultar la base de datos para este rol.
+    |
+    | Esto garantiza que el super admin nunca quede bloqueado
+    | aunque no tenga registros en bwp_accesses.
+    |
+    | Puedes cambiarlo al nombre que uses en tu proyecto:
+    |   'super_admin_role' => 'root',
+    |   'super_admin_role' => 'god',
+    |   'super_admin_role' => 'owner',
+    */
+    'super_admin_role' => 'super_admin',
 
     /*
     |--------------------------------------------------------------------------

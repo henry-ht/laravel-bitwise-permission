@@ -53,6 +53,7 @@ trait HasPermissionsTrait
      * Resuelve el acceso (int bitwise) para una ruta dada.
      * Convierte 'leads.index' → 'leads.*' y consulta la BD.
      * Cachea el resultado para no repetir la query.
+     * Todo se verifica desde la base de datos — incluyendo super_admin.
      */
     public function resolveAccess(string $routeName): int
     {
@@ -60,12 +61,6 @@ trait HasPermissionsTrait
 
         if (array_key_exists($wildcard, $this->bwpAccessCache)) {
             return $this->bwpAccessCache[$wildcard];
-        }
-
-        // Verificar si hay permiso wildcard total (super admin)
-        $totalWildcard = $this->bwpGetWildcardAccess();
-        if ($totalWildcard > 0) {
-            return $this->bwpAccessCache[$wildcard] = $totalWildcard;
         }
 
         $route = AppRoute::where('name', $wildcard)->first();
@@ -83,6 +78,7 @@ trait HasPermissionsTrait
 
         return $this->bwpAccessCache[$wildcard] = $value;
     }
+
 
     /**
      * Setea el acceso activo del request (llamado desde middleware).
@@ -279,16 +275,6 @@ trait HasPermissionsTrait
         }
 
         return implode('.', $parts);
-    }
-
-    /**
-     * Verifica si el rol tiene un permiso wildcard global ('*').
-     * Usado para super_admin que tiene acceso a todo.
-     */
-    protected function bwpGetWildcardAccess(): int
-    {
-        $roleConfig = config("bitwise-permission.role_permissions.{$this->bwpRole?->name}", []);
-        return $roleConfig['*'] ?? 0;
     }
     
     // Agrega estos métodos al trait HasPermissionsTrait
@@ -567,5 +553,76 @@ trait HasPermissionsTrait
         if ($grandParentId) {
             $this->syncParentMenuAccess($grandParentId);
         }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Resolución de acceso
+    // ─────────────────────────────────────────────────────────
+    
+    /**
+     * Verifica si el usuario es super admin según la config.
+     * Si es super admin, retorna acceso total sin consultar la BD.
+     */
+    public function isSuperAdmin(): bool
+    {
+        $superAdminRole = config('bitwise-permission.super_admin_role');
+    
+        if (! $superAdminRole) {
+            return false;
+        }
+    
+        return $this->bwpRole?->name === $superAdminRole;
+    }
+    
+    /**
+     * Resuelve el acceso (int bitwise) para una ruta dada.
+     * Si el usuario es super admin retorna acceso total directamente.
+     * Para los demás roles consulta bwp_accesses en BD.
+     * Cachea el resultado para no repetir la query.
+     */
+    public function resolveAccess(string $routeName): int
+    {
+        // Super admin — acceso total sin tocar BD
+        if ($this->isSuperAdmin()) {
+            $bits = config('bitwise-permission.bits', []);
+            return array_sum(array_filter($bits, fn($v) => $v > 0));
+        }
+    
+        $wildcard = $this->bwpToWildcard($routeName);
+    
+        if (array_key_exists($wildcard, $this->bwpAccessCache)) {
+            return $this->bwpAccessCache[$wildcard];
+        }
+    
+        $route = AppRoute::where('name', $wildcard)->first();
+    
+        if (! $route) {
+            return $this->bwpAccessCache[$wildcard] = 0;
+        }
+    
+        $access = Access::where([
+            'role_id'  => $this->role_id,
+            'route_id' => $route->id,
+        ])->with('permission')->first();
+    
+        $value = $access?->permission?->access ?? 0;
+    
+        return $this->bwpAccessCache[$wildcard] = $value;
+    }
+    
+    /**
+     * hasTotalAccess ahora también considera super admin.
+     */
+    public function hasTotalAccess(?string $routeName = null): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+    
+        $bits  = config('bitwise-permission.bits', []);
+        $total = array_sum(array_filter($bits, fn($v) => $v > 0));
+        $value = $this->bwpResolveValue($routeName);
+    
+        return ($value & $total) === $total;
     }
 }

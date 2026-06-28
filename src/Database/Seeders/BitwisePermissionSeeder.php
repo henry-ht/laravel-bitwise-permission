@@ -176,22 +176,39 @@ class BitwisePermissionSeeder extends Seeder
             }
 
             foreach ($routeAccesses as $routeName => $accessValue) {
-                // '*' es solo para super_admin en config, se resuelve en el trait
-                if ($routeName === '*') {
+
+                // Resolver el permiso por nombre
+                $permission = Permission::where('name', $accessValue)->first();
+
+                if (! $permission) {
+                    $this->command?->warn("  ⚠ Permiso '{$accessValue}' no encontrado.");
                     continue;
                 }
 
+                // '*' → asignar ese permiso a TODAS las rutas existentes en BD
+                if ($routeName === '*') {
+                    // $routes = AppRoute::all();
+
+                    // foreach ($routes as $route) {
+                    //     Access::updateOrCreate(
+                    //         ['role_id' => $role->id, 'route_id' => $route->id],
+                    //         ['permission_id' => $permission->id]
+                    //     );
+                    //     $count++;
+                    // }
+
+                    // $this->command?->info(
+                    //     "  → Rol '{$roleName}': permiso '{$accessValue}' aplicado a {$routes->count()} rutas."
+                    // );
+
+                    continue;
+                }
+
+                // Ruta específica
                 $route = AppRoute::where('name', $routeName)->first();
 
                 if (! $route) {
                     $this->command?->warn("  ⚠ Ruta '{$routeName}' no encontrada.");
-                    continue;
-                }
-
-                $permission = Permission::where('name', $accessValue)->first();
-
-                if (! $permission) {
-                    $this->command?->warn("  ⚠ Permiso con access={$accessValue} no encontrado.");
                     continue;
                 }
 
