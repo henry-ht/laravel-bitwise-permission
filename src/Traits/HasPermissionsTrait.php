@@ -153,18 +153,6 @@ trait HasPermissionsTrait
             && $this->bwpHasBit($this->bwpResolveValue($routeName), $bit);
     }
 
-    /**
-     * Verifica si tiene acceso total (todos los bits activos).
-     */
-    public function hasTotalAccess(?string $routeName = null): bool
-    {
-        $bits  = config('bitwise-permission.bits', []);
-        $total = array_sum($bits);
-        $value = $this->bwpResolveValue($routeName);
-
-        return ($value & $total) === $total;
-    }
-
     // ─────────────────────────────────────────────────────────
     // Menú: ítems visibles para el rol del usuario
     // ─────────────────────────────────────────────────────────
