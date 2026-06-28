@@ -49,36 +49,6 @@ trait HasPermissionsTrait
     // Resolución de acceso
     // ─────────────────────────────────────────────────────────
 
-    /**
-     * Resuelve el acceso (int bitwise) para una ruta dada.
-     * Convierte 'leads.index' → 'leads.*' y consulta la BD.
-     * Cachea el resultado para no repetir la query.
-     * Todo se verifica desde la base de datos — incluyendo super_admin.
-     */
-    public function resolveAccess(string $routeName): int
-    {
-        $wildcard = $this->bwpToWildcard($routeName);
-
-        if (array_key_exists($wildcard, $this->bwpAccessCache)) {
-            return $this->bwpAccessCache[$wildcard];
-        }
-
-        $route = AppRoute::where('name', $wildcard)->first();
-
-        if (! $route) {
-            return $this->bwpAccessCache[$wildcard] = 0;
-        }
-
-        $access = Access::where([
-            'role_id'  => $this->role_id,
-            'route_id' => $route->id,
-        ])->with('permission')->first();
-
-        $value = $access?->permission?->access ?? 0;
-
-        return $this->bwpAccessCache[$wildcard] = $value;
-    }
-
 
     /**
      * Setea el acceso activo del request (llamado desde middleware).
@@ -573,21 +543,15 @@ trait HasPermissionsTrait
     
         return $this->bwpRole?->name === $superAdminRole;
     }
-    
+
     /**
      * Resuelve el acceso (int bitwise) para una ruta dada.
-     * Si el usuario es super admin retorna acceso total directamente.
-     * Para los demás roles consulta bwp_accesses en BD.
+     * Convierte 'leads.index' → 'leads.*' y consulta la BD.
      * Cachea el resultado para no repetir la query.
+     * Todo se verifica desde la base de datos — incluyendo super_admin.
      */
     public function resolveAccess(string $routeName): int
     {
-        // Super admin — acceso total sin tocar BD
-        if ($this->isSuperAdmin()) {
-            $bits = config('bitwise-permission.bits', []);
-            return array_sum(array_filter($bits, fn($v) => $v > 0));
-        }
-    
         $wildcard = $this->bwpToWildcard($routeName);
     
         if (array_key_exists($wildcard, $this->bwpAccessCache)) {
