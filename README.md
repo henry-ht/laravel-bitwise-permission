@@ -5,7 +5,7 @@ Sistema de permisos **bitwise** para Laravel. Roles, permisos, rutas y menús co
 [![Laravel](https://img.shields.io/badge/Laravel-11%2B-red)](https://laravel.com)
 [![Livewire](https://img.shields.io/badge/Livewire-3.x-blue)](https://livewire.laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.2%2B-purple)](https://php.net)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-TC%20Henry%20Commercial-blue)](#licencia)
 
 ---
 
@@ -161,23 +161,22 @@ Define combinaciones con nombres semánticos:
 
 ```php
 $permissions = [
-    'no access'    => $bits['no_access'],
-    'view'         => $bits['view'],
-    'view any'     => $bits['view'] | $bits['view_any'],
-    'read access'  => $bits['view'] | $bits['view_any'],
-    'edit access'  => $bits['view'] | $bits['update'],
-    'create access'=> $bits['view'] | $bits['create'],
+    'no access'     => $bits['no_access'],
+    'view'          => $bits['view'],
+    'read access'   => $bits['view'] | $bits['view_any'],
+    'edit access'   => $bits['view'] | $bits['update'],
+    'create access' => $bits['view'] | $bits['create'],
 
-    'write access' => $bits['view'] | $bits['view_any']
-                    | $bits['create'] | $bits['update'],
+    'write access'  => $bits['view'] | $bits['view_any']
+                     | $bits['create'] | $bits['update'],
 
-    'modify access'=> $bits['view'] | $bits['view_any']
-                    | $bits['create'] | $bits['update'] | $bits['delete'],
+    'modify access' => $bits['view'] | $bits['view_any']
+                     | $bits['create'] | $bits['update'] | $bits['delete'],
 
-    'full access'  => $bits['view'] | $bits['view_any']
-                    | $bits['create'] | $bits['update'] | $bits['delete']
-                    | $bits['restore'] | $bits['force_delete']
-                    | $bits['change_status'] | $bits['assign'] | $bits['support'],
+    'full access'   => $bits['view'] | $bits['view_any']
+                     | $bits['create'] | $bits['update'] | $bits['delete']
+                     | $bits['restore'] | $bits['force_delete']
+                     | $bits['change_status'] | $bits['assign'] | $bits['support'],
 ];
 
 return [
@@ -187,19 +186,58 @@ return [
 ];
 ```
 
+### Super Admin
+
+Define el nombre del rol que tiene acceso total al sistema.
+El middleware y el trait retornan acceso total directamente **sin consultar la base de datos** para este rol — garantizando que nunca quede bloqueado.
+
+```php
+'super_admin_role' => 'super_admin',
+```
+
+Puedes cambiarlo al nombre que uses en tu proyecto:
+
+```php
+'super_admin_role' => 'root',
+'super_admin_role' => 'owner',
+```
+
+Con esto en `role_permissions` ya no necesitas definir nada para el super admin:
+
+```php
+'role_permissions' => [
+    // super_admin se omite — acceso total por config, no por BD
+    'admin' => [
+        'leads.*' => 'modify access',
+        // ...
+    ],
+],
+```
+
+Si aun así defines permisos para el super admin en `role_permissions`, el seeder los ignorará:
+
+```php
+// En el seeder, el rol super_admin_role se salta automáticamente
+// → "Rol 'super_admin' es super admin — se omite (acceso total por config)."
+```
+
+Para verificar en código:
+
+```php
+auth()->user()->isSuperAdmin(); // → true/false
+```
+
 ### Permisos por rol
 
-Referencia los permisos por **nombre** definido en `base_permissions`:
+Referencia los permisos por **nombre** definido en `base_permissions`.
+El `*` aplica ese permiso a **todas las rutas existentes** en `bwp_app_routes`:
 
 ```php
 'role_permissions' => [
 
-    'super_admin' => [
-        '*' => 'full access',  // wildcard — acceso total, se resuelve en el trait
-    ],
-
     'admin' => [
-        'leads.*'    => 'modify access',
+        '*'          => 'read access',   // leer todo por defecto
+        'leads.*'    => 'modify access', // sobreescribir para leads
         'deals.*'    => 'modify access',
         'contacts.*' => 'write access',
         'profile.*'  => 'read access',
@@ -219,16 +257,12 @@ Referencia los permisos por **nombre** definido en `base_permissions`:
 Define quién puede acceder a `/bwp/roles`, `/bwp/accesses`, etc.:
 
 ```php
-// Solo super_admin (recomendado en producción)
-'gate' => fn($user) => $user->role?->name === 'super_admin',
+'gate' => fn($user) => $user->isSuperAdmin(),
 
 // Por múltiples roles
 'gate' => fn($user) => in_array($user->role?->name, ['super_admin', 'admin']),
 
-// Con el trait
-'gate' => fn($user) => $user->hasTotalAccess(),
-
-// Sin restricción — cualquier autenticado (por defecto si no defines gate)
+// Sin restricción (por defecto)
 'gate' => null,
 ```
 
@@ -251,7 +285,7 @@ Define quién puede acceder a `/bwp/roles`, `/bwp/accesses`, etc.:
         'icon'        => 'fa-solid fa-users-line',
         'order'       => 2,
         'roles'       => ['super_admin', 'admin'],
-        'children'    => [             // ← hijos anidados
+        'children'    => [
             [
                 'name'        => 'leads-create',
                 'public_name' => 'Nuevo lead',
@@ -272,12 +306,10 @@ Define quién puede acceder a `/bwp/roles`, `/bwp/accesses`, etc.:
 ### En rutas
 
 ```php
-// Requiere view (bit 1) — mínimo para entrar
 Route::middleware('bwp.permission')->group(function () {
     Route::get('/leads', [LeadController::class, 'index'])->name('leads.index');
 });
 
-// Requiere bit específico
 Route::middleware('bwp.permission:create')->group(function () {
     Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
 });
@@ -300,7 +332,7 @@ El middleware convierte `leads.index` → `leads.*` automáticamente.
 ```php
 $user = auth()->user();
 
-// Acceso activo del request actual (seteado por el middleware)
+$user->isSuperAdmin();    // ← nuevo
 $user->canView();
 $user->canViewAny();
 $user->canCreate();
@@ -316,11 +348,7 @@ $user->hasTotalAccess();
 // Para una ruta específica
 $user->canCreate('deals.*');
 $user->canDelete('contacts.*');
-$user->canViewAny('leads.*');
-
-// Bits extendidos (personalizados)
 $user->canCustom('export', 'reports.*');
-$user->canCustom('approve', 'deals.*');
 ```
 
 ---
@@ -328,6 +356,10 @@ $user->canCustom('approve', 'deals.*');
 ### En vistas Blade
 
 ```blade
+@if(auth()->user()->isSuperAdmin())
+    <span>Super Admin</span>
+@endif
+
 @if(auth()->user()->canCreate())
     <a href="{{ route('leads.create') }}">Nuevo lead</a>
 @endif
@@ -343,10 +375,6 @@ $user->canCustom('approve', 'deals.*');
 @if(auth()->user()->canCustom('export'))
     <button>Exportar CSV</button>
 @endif
-
-@if(auth()->user()->hasTotalAccess())
-    <span>Super Admin</span>
-@endif
 ```
 
 ---
@@ -360,17 +388,17 @@ public function delete(int $id): void
         $this->dispatch('notify', type: 'error', message: 'Sin permiso.');
         return;
     }
-
     Lead::findOrFail($id)->delete();
 }
 
 public function render()
 {
     return view('livewire.leads.table', [
-        'leads'     => Lead::paginate(15),
-        'canCreate' => auth()->user()->canCreate(),
-        'canUpdate' => auth()->user()->canUpdate(),
-        'canDelete' => auth()->user()->canDelete(),
+        'leads'        => Lead::paginate(15),
+        'isSuperAdmin' => auth()->user()->isSuperAdmin(),
+        'canCreate'    => auth()->user()->canCreate(),
+        'canUpdate'    => auth()->user()->canUpdate(),
+        'canDelete'    => auth()->user()->canDelete(),
     ]);
 }
 ```
@@ -402,18 +430,15 @@ $results = $user->setPermissions([
     'leads.*'    => 'modify access',
     'deals.*'    => 'read access',
     'contacts.*' => 'no access',
-    'reports.*'  => 31,             // también acepta int
+    'reports.*'  => 31,
 ]);
-
-// $results → ['leads.*' => true, 'deals.*' => true, ...]
+// → ['leads.*' => true, 'deals.*' => true, ...]
 ```
 
 ### Obtener el permiso actual de una ruta
 
 ```php
 $permission = $user->getPermissionFor('leads.*');
-// → Permission { name: 'modify access', access: 31 }
-
 $permission?->name;    // 'modify access'
 $permission?->access;  // 31
 ```
@@ -433,45 +458,40 @@ foreach ($permisos as $ruta => $permission) {
 
 ## Gestión dinámica de menú
 
-### Habilitar / deshabilitar un ítem de menú
+### Habilitar / deshabilitar un ítem
 
 ```php
-// Por nombre (slug)
-$user->setMenuAccess('leads', true);         // habilitar
-$user->setMenuAccess('leads-create', false); // deshabilitar
-
-// Por ID
-$user->setMenuAccess(3, true);
+$user->setMenuAccess('leads', true);
+$user->setMenuAccess('leads-create', false);
+$user->setMenuAccess(3, true); // por ID
 ```
 
 **Propagación automática al padre:**
-- Al **habilitar** un hijo → el padre se habilita automáticamente
-- Al **deshabilitar** un hijo → si no quedan otros hijos habilitados, el padre se deshabilita
-- La propagación es recursiva (funciona con N niveles)
+- Habilitar un hijo → habilita el padre automáticamente
+- Deshabilitar un hijo → si no quedan otros hijos habilitados, deshabilita el padre
+- Recursivo en N niveles
 
-### Cambiar múltiples ítems de una vez
+### Múltiples ítems de una vez
 
 ```php
 $user->setMenuAccesses([
-    'leads'        => true,
-    'leads-create' => true,
-    'leads-reports'=> false,
-    'deals'        => true,
+    'leads'         => true,
+    'leads-create'  => true,
+    'leads-reports' => false,
+    'deals'         => true,
 ]);
 ```
 
-### Verificar acceso a un ítem de menú
+### Verificar acceso a un ítem
 
 ```php
-$user->hasMenuAccess('leads');        // → true/false
-$user->hasMenuAccess('leads-create'); // → true/false
-$user->hasMenuAccess(5);              // → true/false (por ID)
+$user->hasMenuAccess('leads');
+$user->hasMenuAccess(5);
 ```
 
 ### Obtener el menú del usuario
 
 ```php
-// En un componente Livewire del sidebar
 public function render()
 {
     return view('layouts.sidebar', [
@@ -486,7 +506,6 @@ public function render()
         <i class="{{ $item->icon }}"></i>
         {{ $item->public_name }}
     </a>
-
     @foreach($item->childrenOrdered as $child)
         <a href="{{ route($child->patch) }}">
             └ {{ $child->public_name }}
@@ -499,70 +518,31 @@ public function render()
 
 ## RoleCloneService — roles por usuario
 
-Cada usuario tiene su **propio rol único** clonado a partir de un rol base.
-Esto permite personalizar permisos individuales sin afectar el rol base.
-
-### Al crear un usuario
+Cada usuario tiene su **propio rol único** clonado a partir de un rol base,
+permitiendo personalizar permisos individuales sin afectar el rol base.
 
 ```php
 use HenryHt\BitwisePermission\Services\RoleCloneService;
 use HenryHt\BitwisePermission\Models\Role;
 
-$user     = User::create([
-    'name'     => 'Juan García',
-    'email'    => 'juan@empresa.com',
-    'password' => bcrypt('password'),
-]);
-
+$user     = User::create([...]);
 $baseRole = Role::where('name', 'user')->firstOrFail();
 
-// Clona el rol base y lo asigna al usuario
-// Copia todos los accesses y relaciones de menú del rol base
 app(RoleCloneService::class)->cloneForUser($user, $baseRole);
-
-// El usuario ahora tiene un rol 'user_a3f9x2k1' con todos los
-// permisos del rol base 'user', personalizable individualmente.
+// Crea 'user_a3f9x2k1' con todos los accesses y menús del rol base
 ```
 
-### Clonar sin asignar a un usuario
+### Clonar sin asignar
 
 ```php
-// Clonar con sufijo aleatorio
 $newRole = app(RoleCloneService::class)->cloneRole($baseRole);
-
-// Clonar con sufijo personalizado
 $newRole = app(RoleCloneService::class)->cloneRole($baseRole, 'equipo_ventas');
-// → Crea rol 'user_equipo_ventas'
-```
-
-### Personalizar permisos del rol clonado
-
-Después de clonar, puedes ajustar permisos individuales del usuario:
-
-```php
-// Dar acceso extra a este usuario específico
-$user->setPermission('reports.*', 'read access');
-
-// Quitar un permiso que tiene del rol base
-$user->setPermission('deals.*', 'no access');
-
-// Múltiples ajustes de una vez
-$user->setPermissions([
-    'leads.*'   => 'modify access',
-    'deals.*'   => 'read access',
-    'reports.*' => 'full access',
-]);
-
-// Ajustar visibilidad de menú
-$user->setMenuAccess('reports', true);
-$user->setMenuAccess('deals-delete', false);
+// → 'user_equipo_ventas'
 ```
 
 ### Flujo completo de creación de usuario
 
 ```php
-// En tu UserController o acción de registro
-
 public function store(Request $request, RoleCloneService $roleClone)
 {
     $validated = $request->validate([
@@ -572,21 +552,20 @@ public function store(Request $request, RoleCloneService $roleClone)
         'base_role' => 'required|string|exists:bwp_roles,name',
     ]);
 
-    // 1. Crear el usuario
     $user = User::create([
         'name'     => $validated['name'],
         'email'    => $validated['email'],
         'password' => bcrypt($validated['password']),
     ]);
 
-    // 2. Obtener el rol base
     $baseRole = Role::where('name', $validated['base_role'])->firstOrFail();
-
-    // 3. Clonar el rol y asignarlo al usuario
     $roleClone->cloneForUser($user, $baseRole);
 
-    return redirect()->route('users.index')
-        ->with('success', 'Usuario creado correctamente.');
+    // Personalizar permisos del usuario si es necesario
+    $user->setPermission('reports.*', 'read access');
+    $user->setMenuAccess('reports', true);
+
+    return redirect()->route('users.index')->with('success', 'Usuario creado.');
 }
 ```
 
@@ -597,17 +576,15 @@ public function store(Request $request, RoleCloneService $roleClone)
 ```php
 use HenryHt\BitwisePermission\Helpers\BitwiseHelper;
 
-// Solo funciona en runtime (controllers, seeders, Livewire)
-// NO en el archivo config — ahí usa los $bits directamente
-
+// Solo en runtime — NO en el archivo config
 BitwiseHelper::combine(['view', 'create', 'update']); // → 13
-BitwiseHelper::decode(13);    // → ['view', 'create', 'update']
-BitwiseHelper::has(13, 'create');  // → true
-BitwiseHelper::has(13, 'delete');  // → false
-BitwiseHelper::add(13, 'delete');  // → 29
+BitwiseHelper::decode(13);           // → ['view', 'create', 'update']
+BitwiseHelper::has(13, 'create');    // → true
+BitwiseHelper::has(13, 'delete');    // → false
+BitwiseHelper::add(13, 'delete');    // → 29
 BitwiseHelper::remove(13, 'create'); // → 9
-BitwiseHelper::total(); // → 1023
-BitwiseHelper::all();   // → ['view' => 1, 'view_any' => 2, ...]
+BitwiseHelper::total();              // → 1023
+BitwiseHelper::all();                // → ['view' => 1, 'view_any' => 2, ...]
 ```
 
 ---
@@ -619,22 +596,21 @@ Los bits del 1 al 512 están reservados. **Empieza desde 1024**.
 ```php
 $bits = [
     // Base (no modificar)
-    'no_access'     => 0,
-    'view'          => 1,
+    'no_access' => 0,
+    'view'      => 1,
     // ...
-    'support'       => 512,
+    'support'   => 512,
 
-    // Tus extensiones
-    'export'        => 1024,
-    'import'        => 2048,
-    'approve'       => 4096,
-    'publish'       => 8192,
+    // Extensiones
+    'export'  => 1024,
+    'import'  => 2048,
+    'approve' => 4096,
+    'publish' => 8192,
 ];
 ```
 
 ```php
 auth()->user()->canCustom('export', 'reports.*');
-auth()->user()->canCustom('approve', 'deals.*');
 ```
 
 ```blade
@@ -647,21 +623,15 @@ auth()->user()->canCustom('approve', 'deals.*');
 
 ## Comandos Artisan
 
-### `bwp:install`
-
 ```bash
+# Instalador interactivo
 php artisan bwp:install
 php artisan bwp:install --migrate --seed --force
-```
 
-### `bwp:sync-routes`
-
-Detecta rutas nombradas del proyecto y las registra en `bwp_app_routes` como wildcards.
-
-```bash
-php artisan bwp:sync-routes --dry-run  # ver sin guardar
-php artisan bwp:sync-routes            # rutas web
-php artisan bwp:sync-routes --type=api # rutas api
+# Sincronizar rutas del proyecto
+php artisan bwp:sync-routes --dry-run
+php artisan bwp:sync-routes
+php artisan bwp:sync-routes --type=api
 ```
 
 ---
@@ -677,10 +647,8 @@ php artisan bwp:sync-routes --type=api # rutas api
 | `bwp_menus` | Árbol de navegación |
 | `bwp_menu_role` | Visibilidad de menú por rol |
 
-Cambiar el prefijo (antes de migrar):
-
 ```php
-'table_prefix' => 'myapp_',
+'table_prefix' => 'myapp_', // cambiar antes de migrar
 ```
 
 ---
@@ -698,11 +666,7 @@ Accede en: `/bwp/roles`, `/bwp/permissions`, `/bwp/routes`, `/bwp/accesses`, `/b
 ```
 
 ```bash
-# Personalizar vistas
-php artisan vendor:publish --tag=bwp-views
-
-# Deshabilitar UI
-'ui' => ['enabled' => false],
+php artisan vendor:publish --tag=bwp-views  # personalizar vistas
 ```
 
 ---
@@ -713,6 +677,7 @@ php artisan vendor:publish --tag=bwp-views
 laravel-bitwise-permission/
 ├── composer.json
 ├── README.md
+├── LICENSE
 ├── config/
 │   └── bitwise-permission.php
 ├── database/
@@ -773,7 +738,7 @@ laravel-bitwise-permission/
 2.  php artisan bwp:install
 3.  Agregar role_id a la tabla users
 4.  Incluir HasPermissionsTrait en el modelo User
-5.  Definir $bits y base_permissions en config
+5.  Definir $bits, base_permissions y super_admin_role en config
 6.  Definir role_permissions en config (por nombre de permiso)
 7.  Definir gate en config (quién accede a la UI)
 8.  php artisan bwp:sync-routes        ← detecta rutas del proyecto
@@ -788,4 +753,16 @@ laravel-bitwise-permission/
 
 ## Licencia
 
-MIT © [henry-ht](https://github.com/henry-ht)
+TC Henry Commercial License v1.0
+
+Copyright (c) 2026 TC Henry. Todos los derechos reservados.
+
+Este software es propietario y confidencial. Al adquirir una licencia, se otorga el derecho no exclusivo e intransferible de usar el software en proyectos propios.
+
+**Permitido:** instalar, usar y modificar para uso interno propio.
+
+**Prohibido:** redistribuir, revender, sublicenciar, compartir con terceros o publicar el código fuente.
+
+Para licencias: [contact@tchenry.com](mailto:contact@tchenry.com)
+
+> Ver el archivo [LICENSE](LICENSE) para los términos completos.
