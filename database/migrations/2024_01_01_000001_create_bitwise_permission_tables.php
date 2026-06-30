@@ -45,7 +45,6 @@ return new class extends Migration
             $table->boolean('is_base_role')->default(false);
             $table->foreignId('base_role_id')
                   ->nullable()
-                  ->after('is_base_role')
                   ->constrained("{$this->prefix}roles")
                   ->nullOnDelete();
        
