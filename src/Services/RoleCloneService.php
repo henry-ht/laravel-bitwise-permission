@@ -143,4 +143,90 @@ class RoleCloneService
             );
         }
     }
+    
+    /**
+     * Elimina por completo el rol asociado a un usuario.
+     *
+     * Elimina:
+     *  - Todos los accesses (bwp_accesses) del rol
+     *  - Todas las relaciones de menú (bwp_menu_role) del rol
+     *  - El rol mismo (bwp_roles)
+     *
+     * Por seguridad, NUNCA elimina un rol base (is_base_role = true).
+     * Si el usuario tiene un rol base asignado, retorna false sin hacer nada.
+     *
+     * Uso:
+     *   app(RoleCloneService::class)->deleteRoleForUser($user);
+     *
+     * @param  Model $user  Usuario cuyo rol se va a eliminar
+     * @return bool         true si se eliminó, false si no se pudo (rol base o sin rol)
+     */
+    public function deleteRoleForUser(Model $user): bool
+    {
+        if (! $user->role_id) {
+            return false;
+        }
+
+        $role = Role::find($user->role_id);
+
+        if (! $role) {
+            return false;
+        }
+
+        // Protección absoluta — jamás eliminar un rol base
+        if ($role->is_base_role) {
+            return false;
+        }
+
+        $prefix = config('bitwise-permission.table_prefix', 'bwp_');
+
+        // 1. Desvincular al usuario del rol antes de borrar (evita FK huérfana)
+        $user->role_id = null;
+        $user->save();
+
+        // 2. Eliminar accesses del rol
+        DB::table("{$prefix}accesses")
+            ->where('role_id', $role->id)
+            ->delete();
+
+        // 3. Eliminar relaciones de menú del rol
+        DB::table("{$prefix}menu_role")
+            ->where('role_id', $role->id)
+            ->delete();
+
+        // 4. Eliminar el rol
+        $role->delete();
+
+        return true;
+    }
+
+    /**
+     * Elimina un rol por su ID directamente (sin pasar por un usuario).
+     * Útil para limpieza administrativa.
+     * Misma protección — jamás elimina roles base.
+     *
+     * @param  int $roleId
+     * @return bool
+     */
+    public function deleteRoleById(int $roleId): bool
+    {
+        $role = Role::find($roleId);
+
+        if (! $role || $role->is_base_role) {
+            return false;
+        }
+
+        $prefix = config('bitwise-permission.table_prefix', 'bwp_');
+
+        // Desvincular usuarios que tengan este rol asignado
+        config('bitwise-permission.user_model', \App\Models\User::class)::where('role_id', $roleId)
+            ->update(['role_id' => null]);
+
+        DB::table("{$prefix}accesses")->where('role_id', $roleId)->delete();
+        DB::table("{$prefix}menu_role")->where('role_id', $roleId)->delete();
+
+        $role->delete();
+
+        return true;
+    }
 }
