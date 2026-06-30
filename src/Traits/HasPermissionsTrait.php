@@ -577,4 +577,28 @@ trait HasPermissionsTrait
     
         return ($value & $total) === $total;
     }
+
+    /**
+     * Retorna el rol base del cual se clonó el rol actual del usuario.
+     * Retorna null si el usuario tiene un rol base directamente
+     * o si su rol no fue clonado.
+     *
+     * Uso:
+     *   $user->getBaseRole()?->name; // 'admin', 'user', etc.
+     */
+    public function getBaseRole(): ?Role
+    {
+        return $this->bwpRole?->baseRole;
+    }
+    
+    /**
+     * Verifica si el rol actual del usuario fue clonado de un rol base específico.
+     *
+     * Uso:
+     *   $user->wasClonedFrom('admin'); // → true/false
+     */
+    public function wasClonedFrom(string $baseRoleName): bool
+    {
+        return $this->bwpRole?->baseRole?->name === $baseRoleName;
+    }
 }

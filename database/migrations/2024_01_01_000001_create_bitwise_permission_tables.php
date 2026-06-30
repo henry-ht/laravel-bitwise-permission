@@ -43,8 +43,15 @@ return new class extends Migration
             $table->string('public_name');                // 'Administrador'
             $table->string('description')->nullable();
             $table->boolean('is_base_role')->default(false);
+            $table->foreignId('base_role_id')
+                  ->nullable()
+                  ->after('is_base_role')
+                  ->constrained("{$this->prefix}roles")
+                  ->nullOnDelete();
+       
             $table->timestamps();
-
+                  
+            $table->index('base_role_id');
             $table->index('name');
         });
 

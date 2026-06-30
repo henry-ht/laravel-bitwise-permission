@@ -85,6 +85,7 @@ class RoleCloneService
             'public_name'  => $baseRole->public_name,
             'description'  => $baseRole->description,
             'is_base_role' => false,  // los roles clonados NUNCA son base
+            'base_role_id' => $baseRole->id, // ← registra de qué rol base proviene
         ]);
 
         // Nota: el RoleObserver se dispara aquí y crea las relaciones
