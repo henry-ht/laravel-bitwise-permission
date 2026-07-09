@@ -1,6 +1,8 @@
 // Laravel Bitwise Permission docs — shared interactions
 
 document.addEventListener('DOMContentLoaded', () => {
+  const yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
   // Syntax highlighting
   if (window.hljs) {
     document.querySelectorAll('pre code').forEach((block) => {

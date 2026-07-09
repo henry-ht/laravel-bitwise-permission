@@ -138,7 +138,7 @@ If you discover a security vulnerability, please review [SECURITY.md](SECURITY.m
 
 ## Credits
 
-- [Henry HT](https://github.com/henry-ht)
+- [Henry HT](https://github.com/henry-ht) — [Facebook](https://www.facebook.com/thecreativehenry) · [Instagram](https://www.instagram.com/thecreativehenry/)
 - [All contributors](https://github.com/henry-ht/laravel-bitwise-permission/contributors)
 
 ## License
