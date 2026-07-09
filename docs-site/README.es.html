@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Laravel Bitwise Permission — Documentación en Español</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="docs/installation.html">Docs</a>
+      <a href="index.html#features">Features</a>
+      <a href="docs/examples.html">Examples</a>
+      <a href="index.html">English</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+<div class="docs-shell" style="grid-template-columns: 1fr;">
+  <main class="docs-main" style="padding-left:0; max-width: 760px; margin: 0 auto;">
+    <span class="eyebrow doc-eyebrow">Español</span>
+    <h1>Laravel Bitwise Permission</h1>
+    <div class="doc-content">
+<h2>¿Qué es un permiso bitwise?</h2>
+<p>En lugar de guardar una fila en base de datos por cada acción que un usuario puede hacer, un permiso bitwise es <strong>un solo número entero</strong> que representa múltiples acciones combinadas. Cada acción es una potencia de 2 (un bit):</p>
+<pre><code>view + create + update = 1 + 4 + 8 = 13
+</code></pre>
+<p>Verificar el acceso es una operación <code>AND</code> a nivel de CPU, no una consulta a base de datos:</p>
+<pre><code class="language-php">$access &amp; $bit === $bit
+</code></pre>
+<blockquote>
+<p><strong>Regla base absoluta:</strong> sin el bit <code>view (1)</code> activo, ningún otro bit tiene efecto. El usuario no puede entrar a la vista aunque tenga otros bits activos.</p>
+</blockquote>
+<h2>Características</h2>
+<ul>
+<li>🔢 Núcleo bitwise — combina y compara permisos con aritmética de enteros, sin joins en tiempo real.</li>
+<li>🧩 Permisos por ruta — protege rutas nombradas con convención wildcard (<code>leads.*</code>, <code>deals.*</code>).</li>
+<li>🧭 Menús con visibilidad por rol — árbol de navegación con propagación automática padre/hijo.</li>
+<li>👑 Bypass de super admin — acceso total sin tocar la base de datos.</li>
+<li>🧬 Roles por usuario — <code>RoleCloneService</code> clona un rol base por usuario.</li>
+<li>🖥️ UI Livewire opcional — administra roles, permisos, rutas, accesos y menús desde <code>/bwp/*</code>.</li>
+<li>⚙️ Comandos Artisan — <code>bwp:install</code> y <code>bwp:sync-routes</code> configuran el proyecto en minutos.</li>
+<li>🧱 Todo por configuración — bits, permisos base, roles, rutas y menús en un solo archivo de config.</li>
+</ul>
+<h2>Instalación</h2>
+<pre><code class="language-bash">composer require henry-ht/laravel-bitwise-permission
+php artisan bwp:install
+</code></pre>
+<pre><code class="language-php">use HenryHt\BitwisePermission\Traits\HasPermissionsTrait;
+
+class User extends Authenticatable
+{
+    use HasPermissionsTrait;
+}
+</code></pre>
+<pre><code class="language-php">Route::middleware('bwp.permission:create')-&gt;group(function () {
+    Route::post('/leads', [LeadController::class, 'store'])-&gt;name('leads.store');
+});
+</code></pre>
+<pre><code class="language-blade">@if(auth()-&gt;user()-&gt;canCreate())
+    &lt;a href=&quot;{{ route('leads.create') }}&quot;&gt;Nuevo lead&lt;/a&gt;
+@endif
+</code></pre>
+<p>Guía completa de instalación manual, configuración de <code>role_id</code>, bits, permisos base, super admin, menús y comandos: <strong><a href="https://bitwise.tchenry.com/docs/installation">bitwise.tchenry.com/docs/installation</a></strong>.</p>
+<h2>Documentación</h2>
+<table>
+<thead>
+<tr>
+<th>Guía</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/installation">Instalación</a></td>
+<td>Requisitos, comando de instalación y setup manual</td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/configuration">Configuración</a></td>
+<td>Bits, permisos base, super admin, prefijo de tablas</td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/middleware">Middleware</a></td>
+<td>Protección de rutas y la regla del bit <code>view</code></td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/roles">Roles</a></td>
+<td>Roles base, roles por usuario, <code>RoleCloneService</code></td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/permissions">Permisos</a></td>
+<td>Verificar, asignar y combinar permisos en runtime</td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/menus">Menús</a></td>
+<td>Árboles de navegación con visibilidad por rol</td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/examples">Ejemplos</a></td>
+<td>Flujos completos: creación de usuarios, bits custom, Livewire</td>
+</tr>
+<tr>
+<td><a href="https://bitwise.tchenry.com/docs/upgrading">Migración</a></td>
+<td>Notas de actualización entre versiones</td>
+</tr>
+</tbody>
+</table>
+<h2>Requisitos</h2>
+<ul>
+<li>PHP 8.2+</li>
+<li>Laravel 11, 12 o 13</li>
+<li>Livewire 3 o 4 (solo si usas la UI de administración incluida)</li>
+</ul>
+<h2>Changelog</h2>
+<p>Consulta <a href="https://github.com/henry-ht/laravel-bitwise-permission/blob/main/CHANGELOG.md">CHANGELOG.md</a> para el historial de versiones.</p>
+<h2>Contribuir</h2>
+<p>Las contribuciones son bienvenidas. Lee <a href="https://github.com/henry-ht/laravel-bitwise-permission/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a> antes de abrir un pull request.</p>
+<h2>Seguridad</h2>
+<p>Si encuentras una vulnerabilidad de seguridad, revisa <a href="https://github.com/henry-ht/laravel-bitwise-permission/blob/main/SECURITY.md">SECURITY.md</a> para el proceso de divulgación — no abras un issue público.</p>
+<h2>Créditos</h2>
+<ul>
+<li><a href="https://github.com/henry-ht">Henry HT</a></li>
+<li><a href="https://github.com/henry-ht/laravel-bitwise-permission/contributors">Todos los contribuidores</a></li>
+</ul>
+<h2>Licencia</h2>
+<p>MIT License. Consulta <a href="LICENSE">LICENSE</a> para más información.</p>
+    </div>
+  </main>
+</div>
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="index.html">Home</a>
+    </div>
+  </div>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

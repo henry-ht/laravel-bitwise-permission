@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menus — Laravel Bitwise Permission</title>
+<meta name="description" content="Building self-managing navigation trees with role-based visibility.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html">Installation</a>
+      <a href="configuration.html">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html">Middleware</a>
+      <a href="roles.html">Roles</a>
+      <a href="permissions.html">Permissions</a>
+      <a href="menus.html" class="active">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Core concepts</span>
+    <h1>Menus</h1>
+    <div class="doc-content">
+<h2>How menu visibility works</h2>
+<p>Menus are a separate concern from route permissions — a role can be allowed to <code>view</code> a route but still have its menu entry hidden, and vice versa isn't enforced automatically, so pair both when you want a fully hidden feature.</p>
+<p>Each <code>Menu</code> belongs to a role through the <code>bwp_menu_role</code> pivot, with a <code>disabled</code> flag. A brand-new role starts with every menu item disabled — <code>RoleObserver</code> provisions that row automatically, the same way it provisions "no access" for routes (see <a href="roles.html">Roles</a>).</p>
+<h2>Defining the base tree</h2>
+<pre><code class="language-php">'base_menus' =&gt; [
+    [
+        'key'   =&gt; 'leads',
+        'label' =&gt; 'Leads',
+        'icon'  =&gt; 'users',
+        'route' =&gt; 'leads.index',
+    ],
+    [
+        'key'    =&gt; 'leads-create',
+        'label'  =&gt; 'New lead',
+        'icon'   =&gt; 'plus',
+        'route'  =&gt; 'leads.create',
+        'father' =&gt; 'leads',
+    ],
+],
+</code></pre>
+<p>Use <code>father</code> to nest an item under a parent's <code>key</code>. The seeder resolves these into <code>father_id</code> foreign keys on <code>bwp_menus</code>.</p>
+<h2>Enabling and disabling for a user's role</h2>
+<pre><code class="language-php">$user-&gt;setMenuAccess('leads', true);
+$user-&gt;setMenuAccess('leads', false);
+$user-&gt;setMenuAccess(3, true); // by menu ID instead of key
+</code></pre>
+<h3>Parent propagation</h3>
+<p>This is the detail that makes menu management pleasant instead of fiddly: <strong>enabling or disabling a child automatically syncs its parent.</strong></p>
+<ul>
+<li>Enabling a child → its parent is enabled too, so the tree never shows an orphaned child under a hidden parent.</li>
+<li>Disabling a child → the parent is only disabled if <strong>no other children</strong> of that parent are still enabled.</li>
+</ul>
+<pre><code class="language-php">$user-&gt;setMenuAccess('leads-create', true);
+// → 'leads-create' enabled, 'leads' (its parent) enabled automatically
+
+$user-&gt;setMenuAccess('leads-create', false);
+// → 'leads-create' disabled; 'leads' stays enabled only if it has
+//   another enabled child, otherwise it's disabled too
+</code></pre>
+<h2>Setting multiple items at once</h2>
+<pre><code class="language-php">$user-&gt;setMenuAccesses([
+    'leads'        =&gt; true,
+    'leads-create' =&gt; true,
+    'deals'        =&gt; false,
+]);
+</code></pre>
+<h2>Checking and reading</h2>
+<pre><code class="language-php">$user-&gt;hasMenuAccess('leads');   // bool
+$user-&gt;hasMenuAccess(3);          // by ID
+
+$menu = $user-&gt;getMenu();          // Collection of enabled Menu items for this user's role
+</code></pre>
+<p><code>getMenu()</code> is what you render navigation from — it already reflects role-based visibility, so the view layer doesn't need to know about permissions at all:</p>
+<pre><code class="language-blade">@foreach ($user-&gt;getMenu() as $item)
+    &lt;a href=&quot;{{ route($item-&gt;route) }}&quot;&gt;
+        &lt;i class=&quot;{{ $item-&gt;icon }}&quot;&gt;&lt;/i&gt; {{ $item-&gt;label }}
+    &lt;/a&gt;
+@endforeach
+</code></pre>
+<h2>Managing menus visually</h2>
+<p>The bundled admin UI exposes this at <code>/bwp/menus</code> (editing the tree itself) and <code>/bwp/menus/roles</code> (toggling visibility per role) — see <a href="examples.html">Examples</a> for a walk-through.</p>
+    </div>
+    <div class="doc-pager">
+<a href="permissions.html"><span class="dir">← Previous</span><span class="title">Permissions</span></a>
+<a href="examples.html" class="next"><span class="dir">Next →</span><span class="title">Examples</span></a>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

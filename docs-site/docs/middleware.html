@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Middleware — Laravel Bitwise Permission</title>
+<meta name="description" content="Protecting routes with bwp.permission and the view prerequisite rule.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html">Installation</a>
+      <a href="configuration.html">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html" class="active">Middleware</a>
+      <a href="roles.html">Roles</a>
+      <a href="permissions.html">Permissions</a>
+      <a href="menus.html">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Core concepts</span>
+    <h1>Middleware</h1>
+    <div class="doc-content">
+<h2><code>bwp.permission</code></h2>
+<p>Registered automatically as <code>Route::middleware('bwp.permission')</code>. It resolves access for the current route, then checks bits against it.</p>
+<pre><code class="language-php">Route::middleware('bwp.permission')-&gt;group(function () {
+    Route::get('/leads', [LeadController::class, 'index'])-&gt;name('leads.index');
+});
+
+Route::middleware('bwp.permission:create')-&gt;group(function () {
+    Route::post('/leads', [LeadController::class, 'store'])-&gt;name('leads.store');
+});
+
+Route::middleware('bwp.permission:delete')-&gt;group(function () {
+    Route::delete('/leads/{lead}', [LeadController::class, 'destroy'])-&gt;name('leads.destroy');
+});
+</code></pre>
+<h3>What happens on every request</h3>
+<ol>
+<li>If the user isn't authenticated, redirect to <code>login</code>.</li>
+<li>If the current route has no name, the request passes through untouched — the package can only resolve access for named routes.</li>
+<li>If the user <code>isSuperAdmin()</code>, access is set to the sum of every positive bit in config and the request proceeds — no query.</li>
+<li>Otherwise, <code>$user-&gt;resolveAccess($routeName)</code> looks up the matching wildcard permission and returns the access integer, which is cached on the user via <code>setAccess()</code> for the rest of the request (available in controllers and views).</li>
+<li>The <strong><code>view</code></strong> bit is checked first, unconditionally. If it isn't present, the request is denied — this happens even if a middleware parameter like <code>create</code> was satisfied.</li>
+<li>If a bit parameter was passed (e.g. <code>create</code>), that bit is checked too.</li>
+</ol>
+<h3>The <code>view</code> prerequisite rule</h3>
+<p>This is the one rule to remember: <strong>no bit works without <code>view</code>.</strong> A user with <code>create + update</code> but without <code>view</code> is still denied, because <code>view</code> represents "is allowed to be here at all," and everything else is scoped inside that.</p>
+<pre><code class="language-php">// bits: view=1, create=4  → access = 4 (create only, no view)
+$access &amp; 1 === 1   // false — denied, regardless of the create bit
+</code></pre>
+<p>This mirrors how the config is meant to be used: always include <code>view</code> in every permission that should be reachable at all.</p>
+<h3>Denied requests</h3>
+<pre><code class="language-php">if ($request-&gt;expectsJson()) {
+    return response()-&gt;json(['message' =&gt; 'Unauthorized.'], 403);
+}
+
+abort(403);
+</code></pre>
+<h2><code>bwp-ui</code> gate middleware</h2>
+<p>Protects every route under <code>/bwp/*</code> — the bundled admin UI. It evaluates the <code>bwp-ui</code> gate, which you define in the <code>gate</code> config key (see <a href="configuration.html">Configuration</a>):</p>
+<pre><code class="language-php">'gate' =&gt; function ($user) {
+    return $user-&gt;hasRole('super_admin');
+},
+</code></pre>
+<p>Unauthenticated users are redirected to <code>login</code>; authenticated users who fail the gate get a <code>403</code>.</p>
+<h2>Combining with other middleware</h2>
+<p>The permission middleware only checks authorization — pair it with <code>auth</code> (or your guard of choice) as usual:</p>
+<pre><code class="language-php">Route::middleware(['auth', 'bwp.permission:update'])-&gt;group(function () {
+    Route::put('/leads/{lead}', [LeadController::class, 'update'])-&gt;name('leads.update');
+});
+</code></pre>
+    </div>
+    <div class="doc-pager">
+<a href="configuration.html"><span class="dir">← Previous</span><span class="title">Configuration</span></a>
+<a href="roles.html" class="next"><span class="dir">Next →</span><span class="title">Roles</span></a>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

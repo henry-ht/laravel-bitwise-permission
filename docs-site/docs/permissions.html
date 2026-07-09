@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Permissions — Laravel Bitwise Permission</title>
+<meta name="description" content="Checking, setting and combining permissions at runtime.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html">Installation</a>
+      <a href="configuration.html">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html">Middleware</a>
+      <a href="roles.html">Roles</a>
+      <a href="permissions.html" class="active">Permissions</a>
+      <a href="menus.html">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Core concepts</span>
+    <h1>Permissions</h1>
+    <div class="doc-content">
+<h2>Checking permissions</h2>
+<p><code>HasPermissionsTrait</code> exposes one method per common bit. Each accepts an optional route name — omit it to check against the current route.</p>
+<pre><code class="language-php">$user-&gt;canView();
+$user-&gt;canViewAny();
+$user-&gt;canCreate();
+$user-&gt;canUpdate();
+$user-&gt;canDelete();
+$user-&gt;canRestore();
+$user-&gt;canForceDelete();
+$user-&gt;canChangeStatus();
+$user-&gt;canAssign();
+$user-&gt;canSupport();
+
+// against a specific route rather than the current one
+$user-&gt;canUpdate('leads.update');
+</code></pre>
+<p>For a bit that isn't one of the named helpers, use <code>canCustom()</code>:</p>
+<pre><code class="language-php">$user-&gt;canCustom('export');
+$user-&gt;canCustom('modify_access', 'leads.update');
+</code></pre>
+<p>Every one of these ultimately compares the resolved access integer against the configured bit — see <a href="middleware.html">Middleware</a> for the resolution and the <code>view</code> prerequisite rule that applies here too.</p>
+<h2>Reading and caching access</h2>
+<pre><code class="language-php">$user-&gt;getAccess();          // int — the currently cached access value
+$user-&gt;setAccess(13);        // set it manually (used internally by the middleware)
+$user-&gt;clearAccessCache();   // force re-resolution on the next check
+</code></pre>
+<p>Access is resolved once per route per request and cached in memory on the user instance (<code>bwpAccessCache</code>), so calling <code>canView()</code> and <code>canUpdate()</code> back to back doesn't hit the database twice.</p>
+<h2>Setting a permission</h2>
+<pre><code class="language-php">// by permission name, as defined in base_permissions
+$user-&gt;setPermission('leads.*', 'modify access');
+
+// by raw bitwise value
+$user-&gt;setPermission('leads.*', 13);
+</code></pre>
+<p><code>setPermission()</code> accepts either a route name or a wildcard — it normalizes internally — resolves the matching <code>Permission</code>, and creates or updates the <code>Access</code> row for the <strong>user's current role</strong> (not the base role it may have been cloned from — see <a href="roles.html">Roles</a>). It returns <code>false</code> if the route or the permission doesn't exist, so you can validate before trusting the result.</p>
+<h2>Setting multiple permissions at once</h2>
+<pre><code class="language-php">$results = $user-&gt;setPermissions([
+    'leads.*'    =&gt; 'modify access',
+    'deals.*'    =&gt; 'read access',
+    'contacts.*' =&gt; 'no access',
+]);
+
+// ['leads.*' =&gt; true, 'deals.*' =&gt; true, 'contacts.*' =&gt; true]
+</code></pre>
+<h2>Reading current permissions</h2>
+<pre><code class="language-php">$permission = $user-&gt;getPermissionFor('leads.*'); // ?Permission
+
+$all = $user-&gt;getAllPermissions(); // Collection&lt;route_name =&gt; Permission&gt;
+</code></pre>
+<p>Both are useful for pre-filling a permission-management form — the <a href="examples.html#the-admin-ui">admin UI</a> uses exactly this pair.</p>
+<h2>Combining bits manually</h2>
+<p><code>BitwiseHelper</code> is the low-level primitive everything above is built on:</p>
+<pre><code class="language-php">use HenryHt\BitwisePermission\Helpers\BitwiseHelper;
+
+BitwiseHelper::combine(['view', 'create', 'update']); // 13
+BitwiseHelper::decode(13);                             // ['view', 'create', 'update']
+BitwiseHelper::has(13, 'create');                       // true
+BitwiseHelper::add(13, 'delete');                        // 29
+BitwiseHelper::remove(13, 'update');                      // 5
+BitwiseHelper::total();                                    // sum of every configured bit
+BitwiseHelper::all();                                        // the full bits map from config
+</code></pre>
+<p>Reach for this whenever you need to build or inspect an access integer outside of the user context — seeders, artisan commands, tests.</p>
+<h2><code>hasTotalAccess()</code> and role helpers</h2>
+<pre><code class="language-php">$user-&gt;hasTotalAccess();               // true if access === every configured bit combined
+$user-&gt;hasTotalAccess('leads.update'); // same, scoped to a specific route
+
+$user-&gt;getBaseRole();                  // the base Role this user's role was cloned from, or null
+$user-&gt;wasClonedFrom('agent');         // true if the base role's name matches
+</code></pre>
+    </div>
+    <div class="doc-pager">
+<a href="roles.html"><span class="dir">← Previous</span><span class="title">Roles</span></a>
+<a href="menus.html" class="next"><span class="dir">Next →</span><span class="title">Menus</span></a>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

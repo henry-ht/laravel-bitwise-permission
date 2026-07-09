@@ -1,15 +1,23 @@
 {
     "name": "henry-ht/laravel-bitwise-permission",
-    "description": "Bitwise permission system for Laravel. Roles, permissions, routes and menus with Livewire UI.",
+    "description": "A fast, database-light bitwise permission system for Laravel — roles, permissions, routes and menus with an optional Livewire admin UI.",
     "type": "library",
-    "keywords": ["laravel", "permissions", "bitwise", "roles", "livewire"],
+    "keywords": ["laravel", "permissions", "acl", "roles", "bitwise", "authorization", "livewire", "menu"],
+    "homepage": "https://bitwise.tchenry.com",
     "license": "MIT",
     "authors": [
         {
             "name": "Henry HT",
-            "homepage": "https://github.com/henry-ht"
+            "email": "contact@tchenry.com",
+            "homepage": "https://github.com/henry-ht",
+            "role": "Developer"
         }
     ],
+    "support": {
+        "issues": "https://github.com/henry-ht/laravel-bitwise-permission/issues",
+        "source": "https://github.com/henry-ht/laravel-bitwise-permission",
+        "docs": "https://bitwise.tchenry.com"
+    },
     "require": {
         "php": "^8.2",
         "illuminate/support": "^11.0|^12.0|^13.0",

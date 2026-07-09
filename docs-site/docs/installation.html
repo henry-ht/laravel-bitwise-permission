@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Installation — Laravel Bitwise Permission</title>
+<meta name="description" content="Requirements, the bwp:install command, and manual step-by-step setup.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html" class="active">Installation</a>
+      <a href="configuration.html">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html">Middleware</a>
+      <a href="roles.html">Roles</a>
+      <a href="permissions.html">Permissions</a>
+      <a href="menus.html">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Get started</span>
+    <h1>Installation</h1>
+    <div class="doc-content">
+<h2>Requirements</h2>
+<ul>
+<li>PHP 8.2+</li>
+<li>Laravel 11, 12 or 13</li>
+<li>Livewire 3 or 4 — only required if you use the bundled admin UI</li>
+</ul>
+<h2>1. Require the package</h2>
+<pre><code class="language-bash">composer require henry-ht/laravel-bitwise-permission
+</code></pre>
+<h2>2. Run the installer</h2>
+<pre><code class="language-bash">php artisan bwp:install
+</code></pre>
+<p>This single command:</p>
+<ol>
+<li>Publishes <code>config/bitwise-permission.php</code>.</li>
+<li>Publishes the migration that creates the package tables.</li>
+<li>Publishes the package's CSS assets.</li>
+<li>Runs <code>php artisan migrate</code> (with a confirmation prompt, unless <code>--migrate</code> is passed).</li>
+<li>Seeds base roles, permissions, routes and menus (with a confirmation prompt, unless <code>--seed</code> is passed).</li>
+</ol>
+<p>Non-interactive install, useful in CI or deploy scripts:</p>
+<pre><code class="language-bash">php artisan bwp:install --migrate --seed --force
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--migrate</code></td>
+<td>Run migrations without prompting</td>
+</tr>
+<tr>
+<td><code>--seed</code></td>
+<td>Seed base data without prompting</td>
+</tr>
+<tr>
+<td><code>--force</code></td>
+<td>Overwrite already-published files</td>
+</tr>
+</tbody>
+</table>
+<h2>Manual installation</h2>
+<p>If you'd rather run each step yourself:</p>
+<pre><code class="language-bash">php artisan vendor:publish --tag=bwp-config
+php artisan vendor:publish --tag=bwp-migrations
+php artisan vendor:publish --tag=bwp-assets
+php artisan migrate
+php artisan db:seed --class=&quot;HenryHt\BitwisePermission\Database\Seeders\BitwisePermissionSeeder&quot;
+</code></pre>
+<p>Or publish everything in one go:</p>
+<pre><code class="language-bash">php artisan vendor:publish --tag=bwp-all
+</code></pre>
+<h2>Wiring up the <code>User</code> model</h2>
+<h3>Add <code>role_id</code> to the <code>users</code> table</h3>
+<pre><code class="language-bash">php artisan make:migration add_role_id_to_users_table --table=users
+</code></pre>
+<pre><code class="language-php">// up()
+Schema::table('users', function (Blueprint $table) {
+    $table-&gt;foreignId('role_id')
+          -&gt;nullable()
+          -&gt;constrained('bwp_roles')
+          -&gt;nullOnDelete();
+});
+
+// down()
+Schema::table('users', function (Blueprint $table) {
+    $table-&gt;dropConstrainedForeignId('role_id');
+});
+</code></pre>
+<blockquote>
+<p>If you changed <code>table_prefix</code> in the config, reference <code>{prefix}roles</code> instead of <code>bwp_roles</code>.</p>
+</blockquote>
+<h3>Add the trait</h3>
+<pre><code class="language-php">use HenryHt\BitwisePermission\Traits\HasPermissionsTrait;
+
+class User extends Authenticatable
+{
+    use HasPermissionsTrait;
+
+    protected $fillable = ['name', 'email', 'password', 'role_id'];
+}
+</code></pre>
+<p>The trait registers everything: <code>can*()</code> checks, <code>isSuperAdmin()</code>, permission and menu management. See <a href="permissions.html">Permissions</a> for the full method list.</p>
+<h3>Middleware is registered automatically</h3>
+<p>The package registers the <code>bwp.permission</code> middleware alias for you — nothing to add to <code>bootstrap/app.php</code>. Use it directly on your routes:</p>
+<pre><code class="language-php">Route::middleware('bwp.permission')-&gt;group(function () {
+    // protected routes
+});
+</code></pre>
+<p>To use a different alias, change it in the config:</p>
+<pre><code class="language-php">'middleware' =&gt; [
+    'alias' =&gt; 'bwp.permission',
+],
+</code></pre>
+<p>See <a href="middleware.html">Middleware</a> for how the <code>view</code> prerequisite and additional bits work.</p>
+<h2>Next steps</h2>
+<ol>
+<li>Define <code>bits</code>, <code>base_permissions</code> and <code>super_admin_role</code> in the config — see <a href="configuration.html">Configuration</a>.</li>
+<li>Define <code>role_permissions</code> per role.</li>
+<li>Define who can access the admin UI via <code>gate</code>.</li>
+<li>Run <code>php artisan bwp:sync-routes</code> to register your project's named routes.</li>
+<li>Run <code>php artisan db:seed</code> again if you added roles, permissions or menus.</li>
+<li>Visit <code>/bwp/accesses</code> to review access per role, and <code>/bwp/menus/roles</code> to configure menu visibility.</li>
+</ol>
+<p>For a complete walk-through, see <a href="examples.html">Examples</a>.</p>
+    </div>
+    <div class="doc-pager">
+
+<a href="configuration.html" class="next"><span class="dir">Next →</span><span class="title">Configuration</span></a>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

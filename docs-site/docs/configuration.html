@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Configuration — Laravel Bitwise Permission</title>
+<meta name="description" content="Full reference for config/bitwise-permission.php — bits, roles, routes and menus.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html">Installation</a>
+      <a href="configuration.html" class="active">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html">Middleware</a>
+      <a href="roles.html">Roles</a>
+      <a href="permissions.html">Permissions</a>
+      <a href="menus.html">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Get started</span>
+    <h1>Configuration</h1>
+    <div class="doc-content">
+<p>Everything lives in <code>config/bitwise-permission.php</code>, published by <code>bwp:install</code>.</p>
+<h2>Table prefix</h2>
+<pre><code class="language-php">'table_prefix' =&gt; 'bwp_',
+</code></pre>
+<p>Applied to every table the package creates: <code>bwp_roles</code>, <code>bwp_permissions</code>, <code>bwp_app_routes</code>, <code>bwp_accesses</code>, <code>bwp_menus</code>.</p>
+<h2>Bits</h2>
+<p>Every capability is a power of two. <code>view</code> must always be <code>1</code> — it's the absolute prerequisite bit (see <a href="middleware.html">Middleware</a>).</p>
+<pre><code class="language-php">'bits' =&gt; [
+    'view'   =&gt; 1,
+    'export' =&gt; 2,
+    'create' =&gt; 4,
+    'update' =&gt; 8,
+    'delete' =&gt; 16,
+    'modify_access' =&gt; 32,
+],
+</code></pre>
+<p>Add as many custom bits as you need, always as the next power of two. <code>BitwiseHelper::total()</code> and the super admin bypass both read this array, so it is the single source of truth for "what does full access mean".</p>
+<h2>Base permissions</h2>
+<p>Named permission groups seeded on install, each with a default bit combination:</p>
+<pre><code class="language-php">'base_permissions' =&gt; [
+    'leads'      =&gt; ['view', 'create', 'update', 'delete'],
+    'deals'      =&gt; ['view', 'create', 'update'],
+    'reports'    =&gt; ['view', 'export'],
+],
+</code></pre>
+<h2>Base roles</h2>
+<pre><code class="language-php">'base_roles' =&gt; [
+    'super_admin' =&gt; 'Super Admin',
+    'manager'     =&gt; 'Manager',
+    'agent'       =&gt; 'Agent',
+],
+</code></pre>
+<h2>Role permissions</h2>
+<p>Maps each base role to the permissions (and bits) it starts with:</p>
+<pre><code class="language-php">'role_permissions' =&gt; [
+    'manager' =&gt; [
+        'leads' =&gt; ['view', 'create', 'update', 'delete'],
+        'deals' =&gt; ['view', 'create', 'update'],
+    ],
+    'agent' =&gt; [
+        'leads' =&gt; ['view', 'create'],
+        'deals' =&gt; ['view'],
+    ],
+],
+</code></pre>
+<h2>Super admin role</h2>
+<pre><code class="language-php">'super_admin_role' =&gt; 'super_admin',
+</code></pre>
+<p>Whichever role matches this key gets <code>isSuperAdmin()</code> to return <code>true</code> and bypasses the database entirely in the middleware — <code>setAccess()</code> is called with the sum of every positive bit, computed from config in memory.</p>
+<h2>Base routes</h2>
+<p>Named route wildcards registered on seed, used to match middleware checks:</p>
+<pre><code class="language-php">'base_routes' =&gt; [
+    'leads.*'   =&gt; 'web',
+    'deals.*'   =&gt; 'web',
+    'reports.*' =&gt; 'web',
+],
+</code></pre>
+<p>Rather than maintaining this list by hand, run:</p>
+<pre><code class="language-bash">php artisan bwp:sync-routes
+</code></pre>
+<p>It scans every named route in the project, converts each name to its wildcard (<code>leads.index</code> → <code>leads.*</code>), and lets you confirm which ones to register. Use <code>--dry-run</code> to preview without saving.</p>
+<h2>Base menus</h2>
+<p>Seeded navigation entries, matched against permissions for visibility:</p>
+<pre><code class="language-php">'base_menus' =&gt; [
+    [
+        'key'   =&gt; 'leads',
+        'label' =&gt; 'Leads',
+        'icon'  =&gt; 'users',
+        'route' =&gt; 'leads.index',
+    ],
+],
+</code></pre>
+<p>See <a href="menus.html">Menus</a> for the full tree structure, including nested items.</p>
+<h2>Admin UI gate</h2>
+<p>Controls who can reach the bundled Livewire UI at <code>/bwp/*</code>:</p>
+<pre><code class="language-php">'gate' =&gt; function ($user) {
+    return $user-&gt;hasRole('super_admin');
+},
+</code></pre>
+<p>Evaluated by <code>CheckBwpUiGateMiddleware</code> against the <code>bwp-ui</code> gate on every request to a <code>/bwp/*</code> route. Denying it aborts with a <code>403</code>.</p>
+<h2>Middleware alias</h2>
+<pre><code class="language-php">'middleware' =&gt; [
+    'alias' =&gt; 'bwp.permission',
+],
+</code></pre>
+<p>Rename this if <code>bwp.permission</code> collides with something else in your app.</p>
+    </div>
+    <div class="doc-pager">
+<a href="installation.html"><span class="dir">← Previous</span><span class="title">Installation</span></a>
+<a href="middleware.html" class="next"><span class="dir">Next →</span><span class="title">Middleware</span></a>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

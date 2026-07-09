@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Laravel Bitwise Permission — a permission system that fits in one integer</title>
+<meta name="description" content="A fast, database-light permission system for Laravel. Roles, permissions, routes and menus — resolved from a single integer, not a join table.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%230a0d13%22/><text x=%2250%22 y=%2266%22 font-family=%22monospace%22 font-size=%2254%22 font-weight=%22800%22 fill=%22%23e8a13d%22 text-anchor=%22middle%22>1</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="/" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="docs/installation.html">Docs</a>
+      <a href="#features">Features</a>
+      <a href="docs/examples.html">Examples</a>
+      <a href="docs/upgrading.html">Changelog</a>
+      <a href="README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">
+        GitHub ↗
+      </a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Laravel · PHP 8.2+</span>
+      <h1>A permission system that fits in <span class="accent">one integer.</span></h1>
+      <p class="lead">Roles, per-route permissions, menus and an optional admin UI — every authorization check is a bitwise <code>AND</code>, not a database query.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="docs/installation.html">Get started →</a>
+        <a class="btn btn-ghost" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">View on GitHub</a>
+      </div>
+      <div class="hero-badges">
+        <img src="https://img.shields.io/packagist/v/henry-ht/laravel-bitwise-permission.svg?style=flat-square" alt="Latest Version">
+        <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="MIT license">
+        <img src="https://img.shields.io/badge/Laravel-11%20%7C%2012%20%7C%2013-ff2d20.svg?style=flat-square" alt="Laravel 11 12 13">
+      </div>
+    </div>
+
+    <div class="register">
+      <div class="register-head">
+        <span>ACCESS REGISTER — user.role</span>
+        <span class="val">int(13)</span>
+      </div>
+      <div class="bits">
+        <div class="bit on"><span class="n">1</span><span class="label">view</span></div>
+        <div class="bit"><span class="n">2</span><span class="label">export</span></div>
+        <div class="bit on"><span class="n">4</span><span class="label">create</span></div>
+        <div class="bit on"><span class="n">8</span><span class="label">update</span></div>
+        <div class="bit"><span class="n">16</span><span class="label">delete</span></div>
+      </div>
+      <div class="register-sum">
+        <span>view + create + update</span>
+        <span class="eq">=</span>
+        <span class="total">13</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="block" id="why">
+  <div class="wrap">
+    <span class="eyebrow">Why bitwise</span>
+    <h2>One number instead of a join table.</h2>
+    <p class="lead">Most permission packages store one database row per role × permission × resource. That scales into a maintenance problem. A bitwise permission collapses any combination of capabilities into a single integer, checked with CPU-level math.</p>
+
+    <div class="compare">
+      <div class="panel old">
+        <div class="panel-head"><span>role_has_permissions</span><span>N queries</span></div>
+        <pre><code class="language-php">// one row per capability, per role, per resource
+DB::table('role_has_permissions')
+    ->where('role_id', $role->id)
+    ->where('resource', 'leads')
+    ->whereIn('permission', ['view','create','update'])
+    ->count() === 3;</code></pre>
+      </div>
+      <div class="panel new">
+        <div class="panel-head"><span>bitwise-permission</span><span>0 queries</span></div>
+        <pre><code class="language-php">// one integer, resolved once per request
+$access = $user->getAccess(); // 13
+
+$access & $bits['create'] === $bits['create']; // true</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="features">
+  <div class="wrap">
+    <span class="eyebrow">Features</span>
+    <h2>A complete authorization layer, not just a bitmask.</h2>
+    <p class="lead">The bitwise core is the foundation. On top of it: route protection, role cloning, self-managing menus, and an optional UI to run the whole thing without touching a migration.</p>
+
+    <div class="grid-features">
+      <div class="feature">
+        <div class="glyph">01</div>
+        <h3>Bitwise core</h3>
+        <p>Combine and compare permissions with plain integer math — <code>combine()</code>, <code>decode()</code>, <code>has()</code>.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">02</div>
+        <h3>Route-based permissions</h3>
+        <p>Protect named routes with a wildcard convention: <code>leads.*</code>, <code>deals.*</code>.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">03</div>
+        <h3>Self-managing menus</h3>
+        <p>A navigation tree with role visibility and automatic parent/child propagation.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">04</div>
+        <h3>Super admin bypass</h3>
+        <p>The configured super admin role gets full access without ever touching the database.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">05</div>
+        <h3>Per-user roles</h3>
+        <p><code>RoleCloneService</code> clones a base role per user, so individual permissions diverge safely.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">06</div>
+        <h3>Optional Livewire UI</h3>
+        <p>Manage roles, permissions, routes, accesses and menus from <code>/bwp/*</code> out of the box.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">07</div>
+        <h3>Artisan tooling</h3>
+        <p><code>bwp:install</code> and <code>bwp:sync-routes</code> get a project wired up in minutes.</p>
+      </div>
+      <div class="feature">
+        <div class="glyph">08</div>
+        <h3>Config-first</h3>
+        <p>Bits, base permissions, roles, routes and menus all live in one published config file.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="quicklook">
+  <div class="wrap">
+    <span class="eyebrow">Quick look</span>
+    <h2>From install to a protected route in four steps.</h2>
+
+    <div class="install" style="margin-bottom: 28px;" data-copy="composer require henry-ht/laravel-bitwise-permission && php artisan bwp:install">
+      <span class="cmd"><span class="prompt">$</span>composer require henry-ht/laravel-bitwise-permission &amp;&amp; php artisan bwp:install</span>
+      <span class="copy-label" style="color:var(--text-faint); font-family:var(--sans); font-size:12.5px; cursor:pointer;">Copy</span>
+    </div>
+
+    <pre><code class="language-php">use HenryHt\BitwisePermission\Traits\HasPermissionsTrait;
+
+class User extends Authenticatable
+{
+    use HasPermissionsTrait;
+}</code></pre>
+
+    <pre><code class="language-php">Route::middleware('bwp.permission:create')->group(function () {
+    Route::post('/leads', [LeadController::class, 'store'])->name('leads.store');
+});</code></pre>
+
+    <pre><code class="language-blade">@if(auth()->user()->canCreate())
+    &lt;a href="{{ route('leads.create') }}"&gt;New lead&lt;/a&gt;
+@endif</code></pre>
+  </div>
+</section>
+
+<section class="block" id="docs-index">
+  <div class="wrap">
+    <span class="eyebrow">Documentation</span>
+    <h2>Everything you need to run it in production.</h2>
+    <table>
+      <thead><tr><th>Guide</th><th>Covers</th></tr></thead>
+      <tbody>
+        <tr><td><a href="docs/installation.html">Installation</a></td><td>Requirements, install command, manual setup, wiring the User model</td></tr>
+        <tr><td><a href="docs/configuration.html">Configuration</a></td><td>Bits, base permissions, super admin, table prefix, menus</td></tr>
+        <tr><td><a href="docs/middleware.html">Middleware</a></td><td>Protecting routes and the view prerequisite rule</td></tr>
+        <tr><td><a href="docs/roles.html">Roles</a></td><td>Base roles, per-user roles, RoleCloneService</td></tr>
+        <tr><td><a href="docs/permissions.html">Permissions</a></td><td>Checking, setting and combining permissions at runtime</td></tr>
+        <tr><td><a href="docs/menus.html">Menus</a></td><td>Building navigation trees with role-based visibility</td></tr>
+        <tr><td><a href="docs/examples.html">Examples</a></td><td>End-to-end flows: user creation, custom bits, Livewire</td></tr>
+        <tr><td><a href="docs/upgrading.html">Upgrading</a></td><td>Version-to-version upgrade notes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="docs/installation.html">Docs</a>
+      <a href="README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="assets/js/main.js"></script>
+</body>
+</html>

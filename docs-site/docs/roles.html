@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Roles — Laravel Bitwise Permission</title>
+<meta name="description" content="Base roles versus per-user roles, and RoleCloneService.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html">Installation</a>
+      <a href="configuration.html">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html">Middleware</a>
+      <a href="roles.html" class="active">Roles</a>
+      <a href="permissions.html">Permissions</a>
+      <a href="menus.html">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Core concepts</span>
+    <h1>Roles</h1>
+    <div class="doc-content">
+<h2>Base roles vs. per-user roles</h2>
+<p>A <strong>base role</strong> (<code>is_base_role = true</code>) is a template — <code>manager</code>, <code>agent</code>, <code>super_admin</code> — defined in config and seeded once. Base roles are never deleted and never assigned raw permission edits meant for a single person.</p>
+<p>A <strong>per-user role</strong> is a private clone of a base role, created the moment a user needs permissions that can diverge from the template. This is what keeps "give Alice one extra permission" from mutating everyone else who shares the <code>agent</code> role.</p>
+<h2>Cloning a role for a new user</h2>
+<pre><code class="language-php">use HenryHt\BitwisePermission\Services\RoleCloneService;
+use HenryHt\BitwisePermission\Models\Role;
+
+$roleClone = app(RoleCloneService::class);
+
+$user = User::create([
+    'name'  =&gt; 'Alice',
+    'email' =&gt; 'alice@example.com',
+]);
+
+$baseRole = Role::where('name', 'agent')-&gt;firstOrFail();
+
+$roleClone-&gt;cloneForUser($user, $baseRole);
+</code></pre>
+<p><code>cloneForUser()</code>:</p>
+<ol>
+<li>Creates a new role named <code>{base_role_name}_{random8}</code> (e.g. <code>agent_x7k2p9qz</code>), with <code>base_role_id</code> pointing back to the template.</li>
+<li>Copies every <code>Access</code> row (route × permission) from the base role to the new one.</li>
+<li>Copies every menu-visibility relation from the base role to the new one.</li>
+<li>Assigns the new role to the user (<code>role_id</code>).</li>
+</ol>
+<p>From that point on, <code>$roleClone-&gt;deleteRoleForUser($user)</code> or editing <code>$user</code>'s permissions directly (see <a href="permissions.html">Permissions</a>) only ever touches Alice's own role — <code>agent</code> itself is untouched.</p>
+<h2>Cloning without assigning</h2>
+<p>Useful for preparing a variant role ahead of time:</p>
+<pre><code class="language-php">$variant = $roleClone-&gt;cloneRole($baseRole, suffix: 'senior');
+// creates &quot;agent_senior&quot;
+</code></pre>
+<p>Omit <code>$suffix</code> to get a random 8-character suffix instead.</p>
+<h2>Deleting a user's role</h2>
+<pre><code class="language-php">$roleClone-&gt;deleteRoleForUser($user);
+</code></pre>
+<p>This removes the role's accesses, its menu relations, and the role itself, and detaches it from the user first to avoid an orphaned foreign key. <strong>Base roles are always protected</strong> — if the user's role has <code>is_base_role = true</code>, the method does nothing and returns <code>false</code>.</p>
+<pre><code class="language-php">$roleClone-&gt;deleteRoleById($roleId);
+</code></pre>
+<p>Same protection, but by ID — also detaches any user still pointing at that role before deleting it.</p>
+<h2>Checking a role</h2>
+<pre><code class="language-php">$user-&gt;hasRole('super_admin');
+$user-&gt;isSuperAdmin(); // shortcut for the configured super_admin_role
+</code></pre>
+<p><code>isSuperAdmin()</code> is what the <a href="middleware.html">middleware</a> checks before touching the database at all — see <a href="configuration.html#super-admin-role">Configuration</a> for how it's wired up.</p>
+<h2>Model reference</h2>
+<pre><code class="language-php">class Role extends Model
+{
+    // fillable: name, public_name, description, is_base_role, base_role_id
+    public function accesses(): HasMany;
+    public function menus(): BelongsToMany;
+}
+</code></pre>
+<p>Creating or updating a <code>Role</code> fires <code>RoleObserver</code>, which provisions a "no access" <code>Access</code> row for every registered route and a disabled entry for every menu — so a brand-new role starts fully locked down until permissions are explicitly granted.</p>
+    </div>
+    <div class="doc-pager">
+<a href="middleware.html"><span class="dir">← Previous</span><span class="title">Middleware</span></a>
+<a href="permissions.html" class="next"><span class="dir">Next →</span><span class="title">Permissions</span></a>
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>

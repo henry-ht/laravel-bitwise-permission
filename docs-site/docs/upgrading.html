@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Upgrading — Laravel Bitwise Permission</title>
+<meta name="description" content="Version-to-version upgrade notes.">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="../index.html" class="brand"><span class="brand-mark">1</span> bitwise-permission</a>
+    <div class="nav-links">
+      <a href="installation.html" class="active">Docs</a>
+      <a href="../index.html#features">Features</a>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html">Changelog</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+    <div class="nav-cta">
+      <a class="gh-link" href="https://github.com/henry-ht/laravel-bitwise-permission" target="_blank" rel="noopener">GitHub ↗</a>
+      <button class="nav-toggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</nav>
+
+<div class="docs-shell">
+  <aside class="docs-sidebar">
+    <div class="group">
+      <div class="group-title">Get started</div>
+      <a href="installation.html">Installation</a>
+      <a href="configuration.html">Configuration</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Core concepts</div>
+      <a href="middleware.html">Middleware</a>
+      <a href="roles.html">Roles</a>
+      <a href="permissions.html">Permissions</a>
+      <a href="menus.html">Menus</a>
+    </div>
+    <div class="group">
+      <div class="group-title">Reference</div>
+      <a href="examples.html">Examples</a>
+      <a href="upgrading.html" class="active">Upgrading</a>
+    </div>
+
+  </aside>
+
+  <main class="docs-main">
+    <span class="eyebrow doc-eyebrow">Reference</span>
+    <h1>Upgrading</h1>
+    <div class="doc-content">
+<p>This page tracks version-to-version upgrade notes. For the full list of changes in each release, see <a href="https://github.com/henry-ht/laravel-bitwise-permission/blob/main/CHANGELOG.md">CHANGELOG.md</a>.</p>
+<h2>Upgrading between minor/patch versions</h2>
+<pre><code class="language-bash">composer update henry-ht/laravel-bitwise-permission
+php artisan vendor:publish --tag=bwp-migrations --force
+php artisan migrate
+</code></pre>
+<p>Config changes, when they happen, are called out explicitly here. Compare your published <code>config/bitwise-permission.php</code> against the package's default after any upgrade that mentions new config keys, and merge in what's missing — publishing with <code>--force</code> will overwrite your customizations, so diff first:</p>
+<pre><code class="language-bash">php artisan vendor:publish --tag=bwp-config --force --dry-run
+</code></pre>
+<h2>General guidance</h2>
+<ul>
+<li>Always back up your database before running new migrations in production.</li>
+<li>After upgrading, re-run <code>php artisan bwp:sync-routes --dry-run</code> to check whether any new named routes need registering.</li>
+<li>If you extended core models (<code>Role</code>, <code>Permission</code>, <code>Menu</code>, <code>Access</code>, <code>AppRoute</code>), re-check their signatures against the <a href="https://github.com/henry-ht/laravel-bitwise-permission/tree/main/src/Models">source</a> after a major version bump.</li>
+</ul>
+<h2>v1.0.0</h2>
+<p>Initial public release — no upgrade steps, this is the starting point.</p>
+    </div>
+    <div class="doc-pager">
+<a href="examples.html"><span class="dir">← Previous</span><span class="title">Examples</span></a>
+
+    </div>
+  </main>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span>© 2026 Henry HT · MIT Licensed</span>
+    <div class="footer-links">
+      <a href="https://github.com/henry-ht/laravel-bitwise-permission">GitHub</a>
+      <a href="https://packagist.org/packages/henry-ht/laravel-bitwise-permission">Packagist</a>
+      <a href="../index.html">Home</a>
+      <a href="../README.es.html">Español</a>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/php.min.js"></script>
+<script src="../assets/js/main.js"></script>
+</body>
+</html>
