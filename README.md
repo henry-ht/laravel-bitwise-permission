@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://bitwise.tchenry.com/og-image.png" alt="Laravel Bitwise Permission" width="760">
+  <img src="https://bitwise.tchenry.com/assets/img/og-image.png" alt="Laravel Bitwise Permission" width="760">
 </p>
 
 <h1 align="center">Laravel Bitwise Permission</h1>
