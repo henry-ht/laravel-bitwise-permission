@@ -102,7 +102,7 @@ Route::middleware('bwp.permission:delete')-&gt;group(function () {
 </code></pre>
 <p>Run <code>php artisan bwp:sync-routes</code> after adding these so the wildcards (<code>leads.*</code>) are registered and available to assign in <code>/bwp/accesses</code>.</p>
 <h2>Conditional UI</h2>
-<pre><code class="language-blade">&lt;div class=&quot;toolbar&quot;&gt;
+<pre><code class="language-php">&lt;div class=&quot;toolbar&quot;&gt;
     @if(auth()-&gt;user()-&gt;canCreate())
         &lt;a href=&quot;{{ route('leads.create') }}&quot; class=&quot;btn&quot;&gt;New lead&lt;/a&gt;
     @endif

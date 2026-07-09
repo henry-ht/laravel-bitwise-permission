@@ -109,7 +109,7 @@ $user-&gt;hasMenuAccess(3);          // by ID
 $menu = $user-&gt;getMenu();          // Collection of enabled Menu items for this user's role
 </code></pre>
 <p><code>getMenu()</code> is what you render navigation from — it already reflects role-based visibility, so the view layer doesn't need to know about permissions at all:</p>
-<pre><code class="language-blade">@foreach ($user-&gt;getMenu() as $item)
+<pre><code class="language-php">@foreach ($user-&gt;getMenu() as $item)
     &lt;a href=&quot;{{ route($item-&gt;route) }}&quot;&gt;
         &lt;i class=&quot;{{ $item-&gt;icon }}&quot;&gt;&lt;/i&gt; {{ $item-&gt;label }}
     &lt;/a&gt;
