@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.0.21] - 2026-07-20
+## [1.0.22] - 2026-07-20
 
 ### Added
 
@@ -31,6 +31,6 @@ Initial public release.
 - Config-driven bits, base permissions, base roles, base routes and base menus, with a super admin bypass that never queries the database.
 - Configurable table prefix (`bwp_` by default).
 
-[unreleased]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.21...HEAD
-[1.0.21]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.20...v1.0.21
+[unreleased]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.22...HEAD
+[1.0.22]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.20...v1.0.22
 [1.0.0]: https://github.com/henry-ht/laravel-bitwise-permission/releases/tag/v1.0.0
