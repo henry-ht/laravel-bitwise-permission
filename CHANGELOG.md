@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Nothing yet.
+## [1.0.21] - 2026-07-20
+
+### Added
+
+- `bwp:sync-base` artisan command — re-syncs base roles, routes and menus from config without duplicating existing records. Supports `--roles`, `--routes` and `--menus` options to sync individually or combined.
 
 ## [1.0.0] - 2026-07-09
 
@@ -27,5 +31,6 @@ Initial public release.
 - Config-driven bits, base permissions, base roles, base routes and base menus, with a super admin bypass that never queries the database.
 - Configurable table prefix (`bwp_` by default).
 
-[unreleased]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.21...HEAD
+[1.0.21]: https://github.com/henry-ht/laravel-bitwise-permission/compare/v1.0.20...v1.0.21
 [1.0.0]: https://github.com/henry-ht/laravel-bitwise-permission/releases/tag/v1.0.0

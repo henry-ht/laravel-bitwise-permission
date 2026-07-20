@@ -53,7 +53,7 @@ Laravel Bitwise Permission builds a complete authorization layer on top of that 
 - 👑 **Super admin bypass** — a configured super admin role always has full access, without ever touching the database.
 - 🧬 **Per-user roles** — `RoleCloneService` clones a base role per user, so individual permissions can diverge safely.
 - 🖥️ **Optional Livewire UI** — manage roles, permissions, routes, accesses and menus from `/bwp/*` out of the box.
-- ⚙️ **Artisan tooling** — `bwp:install` and `bwp:sync-routes` get a project wired up in minutes.
+- ⚙️ **Artisan tooling** — `bwp:install`, `bwp:sync-routes` and `bwp:sync-base` get a project wired up in minutes.
 - 🧱 **Config-first** — bits, base permissions, roles, routes and menus are all defined in one published config file.
 
 ## Quick look
@@ -96,6 +96,29 @@ php artisan bwp:install
 ```
 
 `bwp:install` publishes the config, migrations and assets, runs the migrations, and seeds the base roles, permissions and menus. See the [installation guide](https://bitwise.tchenry.com/docs/installation) for the manual, step-by-step version and for wiring up your `User` model.
+
+### Syncing base data
+
+After the initial install, you can re-sync base roles, routes and menus from the config at any time without duplicating existing records:
+
+```bash
+# Sync all (roles + routes + menus)
+php artisan bwp:sync-base
+
+# Sync only roles
+php artisan bwp:sync-base --roles
+
+# Sync only routes
+php artisan bwp:sync-base --routes
+
+# Sync only menus
+php artisan bwp:sync-base --menus
+
+# Combine options
+php artisan bwp:sync-base --roles --routes
+```
+
+`bwp:sync-base` reads the `base_roles`, `base_routes` and `base_menus` arrays from `config/bitwise-permission.php`, creates new entries, updates changed ones and skips records that are already up to date. Menu role visibility (`bwp_menu_role`) is also refreshed automatically.
 
 ## Documentation
 

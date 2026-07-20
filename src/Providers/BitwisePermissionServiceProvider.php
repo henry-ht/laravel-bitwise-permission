@@ -3,6 +3,7 @@
 namespace HenryHt\BitwisePermission\Providers;
 
 use HenryHt\BitwisePermission\Console\Commands\InstallCommand;
+use HenryHt\BitwisePermission\Console\Commands\SyncBaseCommand;
 use HenryHt\BitwisePermission\Console\Commands\SyncRoutesCommand;
 use HenryHt\BitwisePermission\Http\Livewire\Accesses\AccessFormComponent;
 use HenryHt\BitwisePermission\Http\Livewire\Accesses\AccessTableComponent;
@@ -134,6 +135,7 @@ class BitwisePermissionServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallCommand::class,
+                SyncBaseCommand::class,
                 SyncRoutesCommand::class,
             ]);
         }

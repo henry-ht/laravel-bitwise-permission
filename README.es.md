@@ -51,7 +51,7 @@ $access & $bit === $bit
 - 👑 Bypass de super admin — acceso total sin tocar la base de datos.
 - 🧬 Roles por usuario — `RoleCloneService` clona un rol base por usuario.
 - 🖥️ UI Livewire opcional — administra roles, permisos, rutas, accesos y menús desde `/bwp/*`.
-- ⚙️ Comandos Artisan — `bwp:install` y `bwp:sync-routes` configuran el proyecto en minutos.
+- ⚙️ Comandos Artisan — `bwp:install`, `bwp:sync-routes` y `bwp:sync-base` configuran el proyecto en minutos.
 - 🧱 Todo por configuración — bits, permisos base, roles, rutas y menús en un solo archivo de config.
 
 ## Instalación
@@ -83,6 +83,29 @@ Route::middleware('bwp.permission:create')->group(function () {
 ```
 
 Guía completa de instalación manual, configuración de `role_id`, bits, permisos base, super admin, menús y comandos: **[bitwise.tchenry.com/docs/installation](https://bitwise.tchenry.com/docs/installation)**.
+
+### Sincronizar datos base
+
+Después de la instalación inicial, puedes re-sincronizar roles, rutas y menús base desde la config en cualquier momento sin duplicar registros existentes:
+
+```bash
+# Sincronizar todo (roles + rutas + menús)
+php artisan bwp:sync-base
+
+# Solo roles
+php artisan bwp:sync-base --roles
+
+# Solo rutas
+php artisan bwp:sync-base --routes
+
+# Solo menús
+php artisan bwp:sync-base --menus
+
+# Combinar opciones
+php artisan bwp:sync-base --roles --routes
+```
+
+`bwp:sync-base` lee los arrays `base_roles`, `base_routes` y `base_menus` de `config/bitwise-permission.php`, crea registros nuevos, actualiza los que cambiaron y salta los que ya están actualizados. La visibilidad de menús por rol (`bwp_menu_role`) también se actualiza automáticamente.
 
 ## Documentación
 
